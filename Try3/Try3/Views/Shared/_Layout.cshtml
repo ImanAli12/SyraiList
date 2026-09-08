@@ -1,0 +1,287 @@
+﻿@using Microsoft.AspNetCore.Identity
+@using RealEstateWebApp.Models
+@inject SignInManager<ApplicationUser> SignInManager
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - SYRELIS</title>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/Try3.styles.css" asp-append-version="true" />
+
+    <style>
+        /* ===== جميع الأنماط كما هي ===== */
+        :root {
+            --dark: #192e43;
+            --gold: #d4af37;
+            --gray: #51596a;
+            --white: #ffffff;
+            --gold-light: #f4e5c2;
+            --gold-dark: #917005;
+            --border: #e8e4dc;
+            --bg-light: #f8f9fa;
+            --shadow: 0 4px 16px rgba(11, 19, 32, 0.08);
+        }
+
+        body {
+            font-family: "Tajawal", sans-serif;
+            background: linear-gradient(126deg, rgba(11, 19, 32, 0.85), rgb(11 19 32 / 62%)), url(https://images.unsplash.com/photo-1600585154526-990dced4db0d?q=80&w=2070&auto=format);
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            color: var(--gold);
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: rgba(11, 19, 32, 0.96);
+            padding: 0 1rem;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.4);
+            justify-content: space-between;
+            box-shadow: 0px 15px 30px -10px rgb(23, 22, 70);
+            position: sticky;
+            top: 0;
+            z-index: 2000;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+            .navbar .logo {
+                width: 82px;
+                margin: 8px 0;
+                flex-shrink: 0;
+            }
+
+            .navbar .nav-links {
+                display: flex;
+                gap: 30px;
+                list-style: none;
+                flex-wrap: wrap;
+                justify-content: center;
+                padding: 0;
+                margin: 0;
+                flex: 1;
+            }
+
+                .navbar .nav-links a {
+                    color: #f2efea;
+                    text-decoration: none;
+                    font-weight: 600;
+                    font-size: 0.95rem;
+                    transition: 0.3s;
+                    white-space: nowrap;
+                }
+
+                    .navbar .nav-links a:hover {
+                        color: #d4af37;
+                    }
+
+        .navbar-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-right: 3cm;
+        }
+
+        .user-avatar {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #d4af37, #b8941f);
+            color: #0b1320;
+            font-weight: 800;
+            font-size: 1.1rem;
+            font-family: 'Tajawal', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid rgba(212, 175, 55, 0.4);
+            box-shadow: 0 2px 10px rgba(212, 175, 55, 0.2);
+            text-decoration: none;
+            user-select: none;
+            position: relative;
+        }
+
+            .user-avatar:hover {
+                transform: scale(1.08);
+                box-shadow: 0 4px 20px rgba(212, 175, 55, 0.4);
+                border-color: #d4af37;
+            }
+
+            .user-avatar .tooltip {
+                position: absolute;
+                top: 110%;
+                left: 50%;
+                transform: translateX(-50%);
+                background: #0b1320;
+                color: #d4af37;
+                padding: 6px 14px;
+                border-radius: 8px;
+                font-size: 0.75rem;
+                font-weight: 600;
+                white-space: nowrap;
+                opacity: 0;
+                visibility: hidden;
+                transition: all 0.3s ease;
+                border: 1px solid rgba(212, 175, 55, 0.2);
+                pointer-events: none;
+                font-family: 'Tajawal', sans-serif;
+            }
+
+            .user-avatar:hover .tooltip {
+                opacity: 1;
+                visibility: visible;
+                top: 120%;
+            }
+
+            .user-avatar .tooltip::before {
+                content: '';
+                position: absolute;
+                bottom: 100%;
+                left: 50%;
+                transform: translateX(-50%);
+                border: 6px solid transparent;
+                border-bottom-color: #0b1320;
+            }
+
+        .login-btn-nav {
+            background: transparent;
+            border: 1.5px dashed #d4af37;
+            color: #d4af37;
+            padding: 10px 22px;
+            border-radius: 40px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            font-family: "Tajawal", sans-serif;
+            cursor: pointer;
+            transition: all 0.3s;
+            flex-shrink: 0;
+        }
+
+            .login-btn-nav:hover {
+                background: #d4af37;
+                border: 1px solid rgb(50, 39, 11);
+                color: #0b1320;
+            }
+
+        @@media (max-width: 768px) {
+            .navbar {
+                flex-direction: column;
+                padding: 10px;
+            }
+
+                .navbar .nav-links {
+                    gap: 15px;
+                }
+
+                    .navbar .nav-links a {
+                        font-size: 0.8rem;
+                    }
+
+            .navbar-right {
+                margin-right: 1cm;
+            }
+        }
+
+        @@media (max-width: 480px) {
+            .navbar .nav-links {
+                gap: 8px;
+            }
+
+                .navbar .nav-links a {
+                    font-size: 0.7rem;
+                }
+
+            .navbar-right {
+                margin-right: 0.5cm;
+            }
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        footer {
+            background: rgba(11, 19, 32, 0.9);
+            color: #d4af37;
+            border-top: 1px solid rgba(212, 175, 55, 0.3);
+            padding: 20px 0;
+            margin-top: 40px;
+        }
+
+            footer a {
+                color: #d4af37;
+                text-decoration: none;
+            }
+
+                footer a:hover {
+                    color: #fff;
+                }
+    </style>
+</head>
+<body>
+
+    <!-- ========== شريط التنقل ========== -->
+    <nav class="navbar">
+        <img class="logo" src="/image/hero.png" alt="SYRELIS" />
+        <ul class="nav-links">
+            <li><a href="/Home/Index">الرئيسية</a></li>
+            <li><a href="/Properties/Create">أعلن عن عقارك</a></li>
+            <li><a href="/Search/Index">ابحث عن عقارك</a></li>
+            <!-- ✅ زر حسابي → يوجه إلى المفضلة (باستخدام Url.Action) -->
+            <li><a href="@Url.Action("MyFavorites", "Properties")">محفوظاتي</a></li>
+           <li> <a href="/Home/Index?skipRedirect=true#contactSection" id="contactNavLink"> <span class="link_span">تواصل معنا</span>  </a></li>
+        </ul>
+        <div class="navbar-right">
+            @if (SignInManager.IsSignedIn(User))
+            {
+                var userName = User.Identity?.Name ?? "مستخدم";
+                var firstLetter = userName.Length > 0 ? userName[0].ToString().ToUpper() : "?";
+                <div class="user-avatar">
+                    @firstLetter
+                    <span class="tooltip">@userName</span>
+                </div>
+            }
+            else
+            {
+                <button class="login-btn-nav" id="openModalBtn">
+                    <i class="fas fa-sign-in-alt" style="margin-left: 6px;"></i> تسجيل الدخول
+                </button>
+            }
+        </div>
+    </nav>
+
+    <!-- ========== المحتوى الرئيسي ========== -->
+    <div class="container">
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+    </div>
+
+    <!-- ========== التذييل ========== -->
+    <footer class="border-top footer text-muted">
+        <div class="container">
+            &copy; 2026 - SYRELIS - <a asp-area="" asp-controller="Home" asp-action="Privacy">سياسة الخصوصية</a>
+        </div>
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

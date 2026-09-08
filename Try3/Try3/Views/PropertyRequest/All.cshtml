@@ -1,0 +1,849 @@
+﻿
+@model IEnumerable<RealEstateWebApp.Models.PropertyRequest>
+@using RealEstateWebApp.Models
+@using Microsoft.AspNetCore.Identity
+@inject SignInManager<ApplicationUser> SignInManager
+@{
+    ViewData["Title"] = "العقارات المطلوبة";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>العقارات المطلوبة | SYRELIS</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+    <style>
+        :root {
+            --dark: #192e43;
+            --gold: #d4af37;
+            --gray: #51596a;
+            --white: #ffffff;
+            --gold-light: #f4e5c2;
+            --gold-dark: #917005;
+            --border: #e8e4dc;
+            --bg-light: #f8f9fa;
+            --shadow: 0 4px 16px rgba(11, 19, 32, 0.08);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(126deg, rgba(11, 19, 32, 0.85), rgb(11 19 32 / 62%)), url(https://images.unsplash.com/photo-1600585154526-990dced4db0d?q=80&w=2070&auto=format);
+            background-position: center;
+            background-attachment: fixed;
+            font-family: "Tajawal", sans-serif;
+            color: var(--gold);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .navbar {
+            background: rgba(11, 19, 32, 0.96);
+            padding: 0 1rem;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.4);
+            justify-content: space-between;
+            box-shadow: 0px 15px 30px -10px rgb(23, 22, 70);
+            position: sticky;
+            top: 0;
+            z-index: 2000;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+            .navbar .logo {
+                width: 82px;
+                margin: 8px 0;
+                flex-shrink: 0;
+            }
+
+            .navbar .nav-links {
+                display: flex;
+                gap: 30px;
+                list-style: none;
+                flex-wrap: wrap;
+                justify-content: center;
+                padding: 0;
+                margin: 0;
+                align-items: center;
+                flex: 1;
+            }
+
+                .navbar .nav-links a {
+                    color: #f2efea;
+                    text-decoration: none;
+                    font-weight: 600;
+                    font-size: 0.95rem;
+                    transition: 0.3s;
+                    white-space: nowrap;
+                }
+
+                    .navbar .nav-links a:hover {
+                        color: #d4af37;
+                    }
+
+        .navbar-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-left: auto;
+        }
+
+        .user-avatar {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #d4af37, #b8941f);
+            color: #0b1320;
+            font-weight: 800;
+            font-size: 1.1rem;
+            font-family: 'Tajawal', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid rgba(212, 175, 55, 0.4);
+            box-shadow: 0 2px 10px rgba(212, 175, 55, 0.2);
+            text-decoration: none;
+            user-select: none;
+            position: relative;
+        }
+
+            .user-avatar:hover {
+                transform: scale(1.08);
+                box-shadow: 0 4px 20px rgba(212, 175, 55, 0.4);
+                border-color: #d4af37;
+            }
+
+            .user-avatar .tooltip {
+                position: absolute;
+                top: 110%;
+                left: 50%;
+                transform: translateX(-50%);
+                background: #0b1320;
+                color: #d4af37;
+                padding: 6px 14px;
+                border-radius: 8px;
+                font-size: 0.75rem;
+                font-weight: 600;
+                white-space: nowrap;
+                opacity: 0;
+                visibility: hidden;
+                transition: all 0.3s ease;
+                border: 1px solid rgba(212, 175, 55, 0.2);
+                pointer-events: none;
+                font-family: 'Tajawal', sans-serif;
+            }
+
+            .user-avatar:hover .tooltip {
+                opacity: 1;
+                visibility: visible;
+                top: 120%;
+            }
+
+            .user-avatar .tooltip::before {
+                content: '';
+                position: absolute;
+                bottom: 100%;
+                left: 50%;
+                transform: translateX(-50%);
+                border: 6px solid transparent;
+                border-bottom-color: #0b1320;
+            }
+
+        .login-btn-nav {
+            background: transparent;
+            border: 1.5px dashed #d4af37;
+            color: #d4af37;
+            padding: 10px 22px;
+            border-radius: 40px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            font-family: 'Tajawal', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+            .login-btn-nav:hover {
+                background: #d4af37;
+                border: 1px solid rgb(50, 39, 11);
+                color: #0b1320;
+                transform: translateY(-2px);
+                box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+            }
+
+        .page-header {
+            padding: 30px 35px;
+            margin-bottom: 49px;
+            box-shadow: 0 8px 24px rgba(11, 19, 32, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 20px;
+            width: 100%;
+            border-bottom: 2px solid #e2bd46;
+        }
+
+        .back-button {
+            width: 57px;
+            height: 54px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 12px 25px;
+            background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+            border: 2px solid var(--white);
+            border-radius: 12px;
+            color: var(--dark);
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            font-family: "Tajawal", sans-serif;
+        }
+
+        .page-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .page-title h1 {
+            color: #e2bd46 !important;
+            margin: 0;
+            font-size: 2rem;
+            font-weight: 800;
+        }
+
+        .page-title p {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1rem;
+            margin: 5px 0 0 0;
+        }
+
+        .card {
+            max-width: 100%;
+            background: var(--white);
+            border-radius: 20px;
+            padding: 28px;
+            margin-top: 30px;
+            margin-bottom: 61px;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+        }
+
+        .card-header {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--dark);
+            margin-bottom: 22px;
+            padding-bottom: 14px;
+            border-bottom: 2px solid var(--bg-light);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+            .card-header .icon-circle {
+                width: 40px;
+                height: 40px;
+                background: #192e43;
+                border-radius: 16px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: #ffd754;
+                font-size: 1.2rem;
+            }
+
+            .card-header .count-badge {
+                font-size: 0.85rem;
+                color: var(--gray);
+                font-weight: 400;
+                margin-right: 10px;
+            }
+
+        .requests-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 25px;
+        }
+
+        /* ===== بطاقة بإطار كحلي-ذهبي ثخين ===== */
+        .request-card {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 22px 20px 18px;
+            border: 2.5px solid var(--dark);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            transition: all 0.3s ease;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+            .request-card:hover {
+                border-color: var(--gold);
+                box-shadow: 0 6px 28px rgba(212, 175, 55, 0.18);
+                transform: translateY(-3px);
+            }
+
+            .request-card .title {
+                font-size: 1.1rem;
+                font-weight: 800;
+                color: var(--dark);
+                margin-bottom: 4px;
+                padding-bottom: 6px;
+                border-bottom: 1.5px solid var(--gold-light);
+            }
+
+            .request-card .info {
+                color: var(--gray);
+                font-size: 0.9rem;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                padding: 3px 0;
+            }
+
+                .request-card .info i {
+                    color: var(--gold);
+                    width: 20px;
+                    font-size: 0.9rem;
+                    text-align: center;
+                }
+
+            .request-card .user-name {
+                color: var(--dark);
+                font-weight: 700;
+            }
+
+            .request-card .info-value {
+                color: var(--dark);
+                font-weight: 600;
+            }
+
+            .request-card .status {
+                display: inline-block;
+                padding: 3px 14px;
+                border-radius: 20px;
+                font-size: 0.7rem;
+                font-weight: 700;
+                margin-top: 6px;
+                align-self: flex-start;
+            }
+
+        .status-active {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-expired {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .request-card .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 8px;
+            padding-top: 10px;
+            border-top: 1px solid var(--border);
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .btn-contact {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 22px;
+            background: var(--dark);
+            color: var(--gold);
+            border: 2px solid var(--gold);
+            border-radius: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 0.85rem;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+            .btn-contact:hover {
+                background: var(--gold);
+                color: var(--dark);
+                transform: translateY(-2px);
+                box-shadow: 0 4px 20px rgba(212, 175, 55, 0.25);
+            }
+
+            .btn-contact i {
+                font-size: 0.9rem;
+            }
+
+        .request-date {
+            font-size: 0.75rem;
+            color: var(--gray);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 65px 20px;
+            background: var(--bg-light);
+            border-radius: 20px;
+            border: 2px dashed rgba(26, 27, 71, 0.44);
+        }
+
+            .empty-state i {
+                font-size: 3.5rem;
+                color: var(--gold);
+                margin-bottom: 15px;
+                opacity: 0.7;
+            }
+
+            .empty-state h3 {
+                color: var(--dark);
+                font-size: 1.4rem;
+                margin-bottom: 10px;
+            }
+
+            .empty-state p {
+                color: var(--gray);
+                font-size: 1rem;
+            }
+
+        /* ===== مودال التواصل ===== */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(6px);
+        }
+
+            .modal-overlay.active {
+                display: flex !important;
+            }
+
+        .modal-card {
+            background: var(--white);
+            border-radius: 28px;
+            max-width: 450px;
+            width: 90%;
+            padding: 40px 35px;
+            text-align: center;
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.5);
+            border: 2px solid var(--gold);
+            position: relative;
+            animation: modalFadeIn 0.3s ease;
+        }
+
+        @@keyframes modalFadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9) translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .modal-card .modal-icon {
+            font-size: 3rem;
+            color: var(--gold);
+            margin-bottom: 15px;
+        }
+
+        .modal-card h3 {
+            color: var(--dark);
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+        }
+
+        .modal-card .divider {
+            width: 60px;
+            height: 3px;
+            background: linear-gradient(to left, var(--gold), var(--gold-dark));
+            margin: 0 auto 20px;
+            border-radius: 2px;
+        }
+
+        .modal-card .contact-info {
+            text-align: right;
+            margin: 18px 0;
+        }
+
+            .modal-card .contact-info .label {
+                color: var(--gray);
+                font-size: 0.85rem;
+                margin-bottom: 5px;
+                font-weight: 500;
+            }
+
+            .modal-card .contact-info .value {
+                color: var(--dark);
+                font-size: 1.2rem;
+                font-weight: 700;
+                direction: ltr;
+                text-align: center;
+                background: var(--bg-light);
+                padding: 10px;
+                border-radius: 8px;
+                border: 1px solid var(--border);
+            }
+
+        .modal-card .btn-close-modal {
+            padding: 12px 35px;
+            background: var(--dark);
+            color: var(--gold);
+            border: 2px solid var(--gold);
+            border-radius: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 1rem;
+            font-family: 'Tajawal', sans-serif;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+            .modal-card .btn-close-modal:hover {
+                background: var(--gold);
+                color: var(--dark);
+                transform: translateY(-2px);
+                box-shadow: 0 8px 25px rgba(212, 175, 55, 0.25);
+            }
+
+        @@media (max-width: 768px) {
+            .navbar {
+                flex-direction: column;
+                padding: 10px;
+            }
+
+                .navbar .nav-links {
+                    gap: 12px;
+                }
+
+                    .navbar .nav-links a {
+                        font-size: 0.8rem;
+                    }
+
+            .container {
+                padding: 1rem;
+            }
+
+            .page-header {
+                flex-direction: column;
+                text-align: center;
+                padding: 20px;
+            }
+
+            .page-title h1 {
+                font-size: 1.4rem;
+            }
+
+            .requests-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .card {
+                padding: 16px;
+            }
+
+            .user-avatar {
+                width: 36px;
+                height: 36px;
+                font-size: 0.9rem;
+            }
+
+            .login-btn-nav {
+                padding: 8px 16px;
+                font-size: 0.75rem;
+            }
+
+            .navbar-right {
+                gap: 10px;
+                margin-left: 0;
+            }
+
+            .modal-card {
+                padding: 30px 25px;
+            }
+        }
+
+        @@media (max-width: 480px) {
+            .navbar .nav-links {
+                gap: 8px;
+            }
+
+                .navbar .nav-links a {
+                    font-size: 0.7rem;
+                }
+
+            .container {
+                padding: 0.5rem;
+            }
+
+            .page-header {
+                padding: 15px;
+            }
+
+            .page-title h1 {
+                font-size: 1.2rem;
+            }
+
+            .card {
+                padding: 12px;
+            }
+
+            .requests-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .request-card .title {
+                font-size: 1rem;
+            }
+
+            .request-card .info {
+                font-size: 0.8rem;
+            }
+
+            .btn-contact {
+                font-size: 0.8rem;
+                padding: 6px 14px;
+            }
+
+            .modal-card {
+                padding: 25px 20px;
+            }
+
+                .modal-card .contact-info .value {
+                    font-size: 1rem;
+                }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ========== نافبار ========== -->
+    <nav class="navbar">
+        <img class="logo" src="/image/hero.png" alt="SYRELIS" />
+        <ul class="nav-links">
+           <li><a href="/Home/Index?skipRedirect=true"><span class="link_span">الرئيسية</span></a></li>
+            <li><a href="/Properties/Create"><span class="link_span">أعلن عن عقارك</span></a></li>
+            <li><a href="/Search/Index"><span class="link_span">ابحث عن عقارك</span></a></li>
+            <li><a href="@Url.Action("MyFavorites", "Properties")"><span class="link_span">محفوظاتي</span></a></li>
+           <li> <a href="/Home/Index?skipRedirect=true#contactSection" id="contactNavLink"> <span class="link_span">تواصل معنا</span>  </a></li>
+        </ul>
+        <div class="navbar-right">
+            @if (SignInManager.IsSignedIn(User))
+            {
+                var userName = User.Identity?.Name ?? "مستخدم";
+                var firstLetter = userName.Length > 0 ? userName[0].ToString().ToUpper() : "?";
+                <div class="user-avatar">
+                    @firstLetter
+                    <span class="tooltip">@userName</span>
+                </div>
+            }
+            else
+            {
+                <button class="login-btn-nav" id="openModalBtn">
+                    <i class="fas fa-sign-in-alt" style="margin-left: 6px;"></i> تسجيل الدخول
+                </button>
+            }
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="page-header">
+            <div class="page-info">
+                <a href="/" class="back-button"><i class="fas fa-arrow-right"></i></a>
+                <div class="page-title">
+                    <h1>العقارات المطلوبة</h1>
+                    <p>تعرف على ما يبحث عنه المشترون وعرض عقارك المناسب</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <div class="icon-circle"><i class="fa-solid fa-clipboard-list"></i></div>
+                طلبات الزبائن
+                <span class="count-badge">@(Model?.Count() ?? 0) طلب</span>
+            </div>
+
+            @if (Model != null && Model.Any())
+            {
+                <div class="requests-grid">
+                    @foreach (var req in Model)
+                    {
+                        <div class="request-card">
+                            <!-- العنوان -->
+                            <div class="title">@req.Title</div>
+
+                            <!-- اسم المستخدم -->
+                            <div class="info">
+                                <i class="fa-solid fa-user"></i>
+                                <span class="user-name">@(req.User?.FullName ?? req.User?.UserName ?? "-")</span>
+                            </div>
+
+                            <!-- نوع العقار -->
+                            <div class="info">
+                                <i class="fa-solid fa-building"></i>
+                                <span>نوع العقار: <span class="info-value">@(req.PropertyType?.NameAr ?? "-")</span></span>
+                            </div>
+
+                            <!-- طبيعة الطلب (شراء/إيجار) -->
+                            <div class="info">
+                                <i class="fa-solid fa-tag"></i>
+                                <span>طبيعة الطلب: <span class="info-value">@req.Status</span></span>
+                            </div>
+
+                            <!-- المدينة -->
+                            <div class="info">
+                                <i class="fa-solid fa-location-dot"></i>
+                                <span>المدينة: <span class="info-value">@(req.City?.NameAr ?? "-")</span></span>
+                            </div>
+
+                            <!-- الحي -->
+                            <div class="info">
+                                <i class="fa-solid fa-map-pin"></i>
+                                <span>الحي: <span class="info-value">@(req.Neighborhood ?? "-")</span></span>
+                            </div>
+
+                            <!-- الميزانية -->
+                            <div class="info">
+                                <i class="fa-solid fa-money-bill"></i>
+                                <span>الميزانية: <span class="info-value">@(req.MinPrice?.ToString("N0") ?? "0") - @(req.MaxPrice?.ToString("N0") ?? "不限")</span></span>
+                            </div>
+
+                            <!-- المساحة -->
+                            <div class="info">
+                                <i class="fa-solid fa-vector-square"></i>
+                                <span>المساحة: <span class="info-value">@(req.MinArea?.ToString("N0") ?? "0") - @(req.MaxArea?.ToString("N0") ?? "不限") م²</span></span>
+                            </div>
+
+                            <!-- عدد الغرف -->
+                            <div class="info">
+                                <i class="fa-solid fa-bed"></i>
+                                <span>عدد الغرف: <span class="info-value">@(req.MinRooms?.ToString() ?? "0") - @(req.MaxRooms?.ToString() ?? "不限")</span></span>
+                            </div>
+
+                            <!-- الحالة -->
+                            <div>
+                                <span class="status @(req.IsActive ? "status-active" : "status-expired")">
+                                    @(req.IsActive ? "✓ نشط" : "✗ منتهي")
+                                </span>
+                            </div>
+
+                            <!-- التاريخ + زر التواصل -->
+                            <div class="card-footer">
+                                <span class="request-date"><i class="fa-regular fa-calendar"></i> @req.CreatedAt.ToString("yyyy/MM/dd")</span>
+                                <button class="btn-contact" onclick="openContactModal('@req.PhoneNumber', '@req.Email')">
+                                    <i class="fas fa-phone"></i> تواصل
+                                </button>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="empty-state">
+                    <i class="fa-regular fa-clipboard"></i>
+                    <h3>لا توجد طلبات حالياً</h3>
+                    <p>سوف تظهر هنا طلبات الزبائن عند توفرها</p>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- ===== مودال التواصل ===== -->
+    <div id="contactModal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-icon">
+                <i class="fas fa-phone-alt"></i>
+            </div>
+            <h3>معلومات التواصل</h3>
+            <div class="divider"></div>
+
+            <div class="contact-info">
+                <div class="label"><i class="fa-solid fa-phone" style="color:var(--gold);"></i> رقم الهاتف:</div>
+                <div class="value" id="contactPhone">-</div>
+            </div>
+
+            <div class="contact-info">
+                <div class="label"><i class="fa-solid fa-envelope" style="color:var(--gold);"></i> البريد الإلكتروني:</div>
+                <div class="value" id="contactEmail">-</div>
+            </div>
+
+            <button class="btn-close-modal" onclick="closeContactModal()">
+                <i class="fa-solid fa-xmark"></i> إغلاق
+            </button>
+        </div>
+    </div>
+
+    <script>
+        function openContactModal(phone, email) {
+            document.getElementById('contactPhone').textContent = phone || '-';
+            document.getElementById('contactEmail').textContent = email || '-';
+            document.getElementById('contactModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeContactModal() {
+            document.getElementById('contactModal').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        // إغلاق المودال عند الضغط على الخلفية
+        document.getElementById('contactModal').addEventListener('click', function(e) {
+            if (e.target === this) closeContactModal();
+        });
+
+        // إغلاق المودال بـ Escape
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                if (document.getElementById('contactModal').classList.contains('active')) {
+                    closeContactModal();
+                }
+            }
+        });
+    </script>
+
+</body>
+</html>

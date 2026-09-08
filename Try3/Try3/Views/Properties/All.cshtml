@@ -1,0 +1,720 @@
+﻿@model List<RealEstateWebApp.Models.Property>
+@using RealEstateWebApp.Models
+@using Microsoft.AspNetCore.Identity
+@inject SignInManager<ApplicationUser> SignInManager
+@{
+    ViewData["Title"] = "جميع العقارات";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>جميع العقارات | SYRELIS</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+    <style>
+        :root {
+            --dark: #192e43;
+            --gold: #d4af37;
+            --gray: #51596a;
+            --white: #ffffff;
+            --gold-light: #f4e5c2;
+            --gold-dark: #917005;
+            --border: #e8e4dc;
+            --bg-light: #f8f9fa;
+            --shadow: 0 4px 16px rgba(11, 19, 32, 0.08);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(126deg, rgba(11, 19, 32, 0.85), rgb(11 19 32 / 62%)), url(https://images.unsplash.com/photo-1600585154526-990dced4db0d?q=80&w=2070&auto=format);
+            background-position: center;
+            background-attachment: fixed;
+            font-family: "Tajawal", sans-serif;
+            color: var(--gold);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .navbar {
+            background: rgba(11, 19, 32, 0.96);
+            padding: 0 1rem;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.4);
+            justify-content: space-between;
+            box-shadow: 0px 15px 30px -10px rgb(23, 22, 70);
+            position: sticky;
+            top: 0;
+            z-index: 2000;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+            .navbar .logo {
+                width: 82px;
+                margin: 8px 0;
+                flex-shrink: 0;
+            }
+
+            .navbar .nav-links {
+                display: flex;
+                gap: 30px;
+                list-style: none;
+                flex-wrap: wrap;
+                justify-content: center;
+                padding: 0;
+                margin: 0;
+                align-items: center;
+                flex: 1;
+            }
+
+                .navbar .nav-links a {
+                    color: #f2efea;
+                    text-decoration: none;
+                    font-weight: 600;
+                    font-size: 0.95rem;
+                    transition: 0.3s;
+                    white-space: nowrap;
+                }
+
+                    .navbar .nav-links a:hover {
+                        color: #d4af37;
+                    }
+
+        .navbar-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-left: auto;
+        }
+
+        .user-avatar {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #d4af37, #b8941f);
+            color: #0b1320;
+            font-weight: 800;
+            font-size: 1.1rem;
+            font-family: 'Tajawal', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid rgba(212, 175, 55, 0.4);
+            box-shadow: 0 2px 10px rgba(212, 175, 55, 0.2);
+            text-decoration: none;
+            user-select: none;
+            position: relative;
+        }
+
+            .user-avatar:hover {
+                transform: scale(1.08);
+                box-shadow: 0 4px 20px rgba(212, 175, 55, 0.4);
+                border-color: #d4af37;
+            }
+
+            .user-avatar .tooltip {
+                position: absolute;
+                top: 110%;
+                left: 50%;
+                transform: translateX(-50%);
+                background: #0b1320;
+                color: #d4af37;
+                padding: 6px 14px;
+                border-radius: 8px;
+                font-size: 0.75rem;
+                font-weight: 600;
+                white-space: nowrap;
+                opacity: 0;
+                visibility: hidden;
+                transition: all 0.3s ease;
+                border: 1px solid rgba(212, 175, 55, 0.2);
+                pointer-events: none;
+                font-family: 'Tajawal', sans-serif;
+            }
+
+            .user-avatar:hover .tooltip {
+                opacity: 1;
+                visibility: visible;
+                top: 120%;
+            }
+
+            .user-avatar .tooltip::before {
+                content: '';
+                position: absolute;
+                bottom: 100%;
+                left: 50%;
+                transform: translateX(-50%);
+                border: 6px solid transparent;
+                border-bottom-color: #0b1320;
+            }
+
+        .login-btn-nav {
+            background: transparent;
+            border: 1.5px dashed #d4af37;
+            color: #d4af37;
+            padding: 10px 22px;
+            border-radius: 40px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            font-family: 'Tajawal', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+            .login-btn-nav:hover {
+                background: #d4af37;
+                border: 1px solid rgb(50, 39, 11);
+                color: #0b1320;
+                transform: translateY(-2px);
+                box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+            }
+
+        .page-header {
+            padding: 30px 35px;
+            margin-bottom: 49px;
+            box-shadow: 0 8px 24px rgba(11, 19, 32, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 20px;
+            width: 100%;
+            border-bottom: 2px solid #e2bd46;
+        }
+
+        .back-button {
+            width: 57px;
+            height: 54px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 12px 25px;
+            background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+            border: 2px solid var(--white);
+            border-radius: 12px;
+            color: var(--dark);
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            font-family: "Tajawal", sans-serif;
+        }
+
+        .page-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .page-title h1 {
+            color: #e2bd46 !important;
+            margin: 0;
+            font-size: 2rem;
+            font-weight: 800;
+        }
+
+        .page-title p {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1rem;
+            margin: 5px 0 0 0;
+        }
+
+        .card {
+            max-width: 100%;
+            background: var(--white);
+            border-radius: 20px;
+            padding: 28px;
+            margin-top: 30px;
+            margin-bottom: 61px;
+        }
+
+        .card-header {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--dark);
+            margin-bottom: 22px;
+            padding-bottom: 14px;
+            border-bottom: 2px solid var(--bg-light);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+            .card-header .icon-circle {
+                width: 40px;
+                height: 40px;
+                background: #192e43;
+                border-radius: 16px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: #ffd754;
+                font-size: 1.2rem;
+            }
+
+        .property-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .property-card {
+            border-radius: 14px;
+            overflow: hidden;
+            background: var(--white);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+            transition: transform 0.3s;
+        }
+
+            .property-card:hover {
+                transform: translateY(-5px);
+            }
+
+        .property-img {
+            height: 190px;
+            background: var(--bg-light);
+            position: relative;
+            overflow: hidden;
+        }
+
+            .property-img img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+
+        .property-badge {
+            position: absolute;
+            top: 11px;
+            right: 11px;
+            background: var(--dark);
+            color: var(--gold);
+            padding: 4px 13px;
+            border-radius: 18px;
+            font-size: 0.76rem;
+            font-weight: 700;
+        }
+
+        .property-body {
+            padding: 17px;
+        }
+
+        .property-price {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: var(--gold);
+        }
+
+        .property-title {
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .property-location {
+            color: var(--gray);
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+
+        .property-features {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+            font-size: 0.8rem;
+            color: var(--gray);
+        }
+
+            .property-features span {
+                background: var(--bg-light);
+                padding: 4px 10px;
+                border-radius: 6px;
+            }
+
+        .btn-details {
+            display: inline-block;
+            padding: 6px 16px;
+            background: var(--dark);
+            color: var(--gold);
+            border: 2px solid var(--gold);
+            border-radius: 25px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.3s;
+            text-decoration: none;
+            font-size: 0.8rem;
+            font-family: "Tajawal", sans-serif;
+            margin-top: 10px;
+        }
+
+            .btn-details:hover {
+                background: var(--gold);
+                color: var(--dark);
+            }
+
+        .pagination-container {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 25px;
+            flex-wrap: wrap;
+            direction: ltr;
+        }
+
+            .pagination-container .page-btn {
+                padding: 6px 14px;
+                border-radius: 6px;
+                cursor: pointer;
+                border: none;
+                font-family: 'Tajawal', sans-serif;
+                font-size: 0.9rem;
+                font-weight: 700;
+                transition: 0.3s;
+                text-decoration: none;
+                display: inline-flex;
+                align-items: center;
+                gap: 4px;
+            }
+
+                .pagination-container .page-btn.active {
+                    background: #d4af37;
+                    color: #fff;
+                }
+
+                .pagination-container .page-btn.inactive {
+                    background: transparent;
+                    border: 1px solid #d4af37;
+                    color: #d4af37;
+                }
+
+                    .pagination-container .page-btn.inactive:hover {
+                        background: #d4af37;
+                        color: #192e43;
+                    }
+
+                .pagination-container .page-btn.arrow {
+                    background: #192e43;
+                    color: #fff;
+                }
+
+                    .pagination-container .page-btn.arrow:hover {
+                        background: #d4af37;
+                        color: #192e43;
+                    }
+
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            border: 2px dashed rgba(212, 175, 55, 0.3);
+        }
+
+            .empty-state i {
+                font-size: 4rem;
+                color: var(--gold);
+                margin-bottom: 20px;
+                opacity: 0.8;
+            }
+
+            .empty-state h3 {
+                font-size: 1.5rem;
+                color: #ffffff !important;
+                margin-bottom: 10px;
+            }
+
+            .empty-state p {
+                font-size: 1rem;
+                color: #d4af37 !important;
+                opacity: 0.8;
+            }
+
+        .btn {
+            padding: 12px 26px;
+            border: none;
+            border-radius: 10px;
+            font-family: "Tajawal", sans-serif;
+            font-size: 0.98rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: var(--dark);
+            color: #ffffff;
+            box-shadow: -1px 2px 9px rgb(11 19 32 / 73%);
+        }
+
+            .btn-primary:hover {
+                background: #ffffff;
+                color: #1a3250;
+            }
+
+        @@media (max-width: 768px) {
+            .navbar {
+                flex-direction: column;
+                padding: 10px;
+            }
+
+                .navbar .nav-links {
+                    gap: 12px;
+                }
+
+                    .navbar .nav-links a {
+                        font-size: 0.8rem;
+                    }
+
+            .container {
+                padding: 1rem;
+            }
+
+            .page-header {
+                flex-direction: column;
+                text-align: center;
+                padding: 20px;
+            }
+
+            .page-title h1 {
+                font-size: 1.4rem;
+            }
+
+            .property-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .card {
+                padding: 16px;
+            }
+
+            .user-avatar {
+                width: 36px;
+                height: 36px;
+                font-size: 0.9rem;
+            }
+
+            .login-btn-nav {
+                padding: 8px 16px;
+                font-size: 0.75rem;
+            }
+
+            .navbar-right {
+                gap: 10px;
+                margin-left: 0;
+            }
+
+            .pagination-container .page-btn {
+                padding: 4px 10px;
+                font-size: 0.75rem;
+            }
+        }
+
+        @@media (max-width: 480px) {
+            .navbar .nav-links {
+                gap: 8px;
+            }
+
+                .navbar .nav-links a {
+                    font-size: 0.7rem;
+                }
+
+            .container {
+                padding: 0.5rem;
+            }
+
+            .page-header {
+                padding: 15px;
+            }
+
+            .page-title h1 {
+                font-size: 1.2rem;
+            }
+
+            .card {
+                padding: 12px;
+            }
+
+            .property-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .property-price {
+                font-size: 1.1rem;
+            }
+
+            .property-title {
+                font-size: 0.9rem;
+            }
+
+            .btn-details {
+                font-size: 0.7rem;
+                padding: 4px 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <img class="logo" src="/image/hero.png" alt="SYRELIS" />
+        <ul class="nav-links">
+           <li><a href="/Home/Index?skipRedirect=true"><span class="link_span">الرئيسية</span></a></li>
+            <li><a href="/Properties/Create"><span class="link_span">أعلن عن عقارك</span></a></li>
+            <li><a href="/Search/Index"><span class="link_span">ابحث عن عقارك</span></a></li>
+            <li><a href="@Url.Action("MyFavorites", "Properties")"><span class="link_span">محفوظاتي</span></a></li>
+           <li> <a href="/Home/Index?skipRedirect=true#contactSection" id="contactNavLink"> <span class="link_span">تواصل معنا</span>  </a></li>
+        </ul>
+        <div class="navbar-right">
+            @if (SignInManager.IsSignedIn(User))
+            {
+                var userName = User.Identity?.Name ?? "مستخدم";
+                var firstLetter = userName.Length > 0 ? userName[0].ToString().ToUpper() : "?";
+                <div class="user-avatar">
+                    @firstLetter
+                    <span class="tooltip">@userName</span>
+                </div>
+            }
+            else
+            {
+                <button class="login-btn-nav" id="openModalBtn">
+                    <i class="fas fa-sign-in-alt" style="margin-left: 6px;"></i> تسجيل الدخول
+                </button>
+            }
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="page-header">
+            <div class="page-info">
+                <a href="/" class="back-button"><i class="fas fa-arrow-right"></i></a>
+                <div class="page-title">
+                    <h1>جميع العقارات</h1>
+                    <p>استكشف مجموعة واسعة من العقارات المتاحة</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <div class="icon-circle"><i class="fa-solid fa-list"></i></div>
+                العقارات المتاحة
+                <span style="font-size:0.9rem; color:var(--gray); font-weight:400; margin-right:10px;">@(Model?.Count ?? 0) عقار</span>
+            </div>
+
+            @if (Model != null && Model.Any())
+            {
+                <div class="property-grid">
+                    @foreach (var property in Model)
+                    {
+                        var mainImage = property.Images?.FirstOrDefault(i => i.IsMain)?.ImageUrl ?? "/image/default.jpg";
+                        <div class="property-card">
+                            <div class="property-img">
+                                <img src="@mainImage" onerror="this.src='/image/default.jpg'" />
+                                <span class="property-badge">@property.Status</span>
+                            </div>
+                            <div class="property-body">
+                                <div class="property-price">@property.Price.ToString("N0") @property.PriceCurrency</div>
+                                <div class="property-title">@property.Title</div>
+                                <div class="property-location">
+                                    <i class="fa-solid fa-location-dot"></i> @(property.City?.NameAr ?? "-")
+                                    @if (!string.IsNullOrEmpty(property.Neighborhood))
+                                    {
+                                        <span> - @property.Neighborhood</span>
+                                    }
+                                </div>
+                                <div class="property-features">
+                                    <span><i class="fa-solid fa-vector-square"></i> @property.Area م²</span>
+                                    <span><i class="fa-solid fa-bed"></i> @property.Rooms غرف</span>
+                                    <span><i class="fa-solid fa-bath"></i> @property.Bathrooms حمامات</span>
+                                    @if (property.Floor.HasValue)
+                                    {
+                                        <span><i class="fa-solid fa-layer-group"></i> طابق @property.Floor</span>
+                                    }
+                                </div>
+                                <a href="/Properties/Details/@property.Id" class="btn-details">
+                                    <i class="fa-solid fa-eye"></i> تفاصيل
+                                </a>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <!-- ✅ Pagination -->
+                @if (ViewBag.TotalCount != null && ViewBag.TotalCount > 0)
+                {
+                    var totalPages = (int)Math.Ceiling((double)ViewBag.TotalCount / ViewBag.PageSize);
+                    var currentPage = ViewBag.CurrentPage;
+
+                    <div class="pagination-container">
+                        @if (currentPage > 1)
+                        {
+                            <a href="@Url.Action("All", new { page = currentPage - 1 })" class="page-btn arrow">
+                                <i class="fa-solid fa-chevron-right"></i> السابق
+                            </a>
+                        }
+
+                        @for (int i = 1; i <= totalPages && i <= 10; i++)
+                        {
+                            if (i == currentPage)
+                            {
+                                <span class="page-btn active">@i</span>
+                            }
+                            else
+                            {
+                                <a href="@Url.Action("All", new { page = i })" class="page-btn inactive">@i</a>
+                            }
+                        }
+
+                        @if (currentPage < totalPages)
+                        {
+                            <a href="@Url.Action("All", new { page = currentPage + 1 })" class="page-btn arrow">
+                                التالي <i class="fa-solid fa-chevron-left"></i>
+                            </a>
+                        }
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="empty-state">
+                    <i class="fa-regular fa-building"></i>
+                    <h3>لا توجد عقارات متاحة حالياً</h3>
+                    <p>سيتم إضافة عقارات جديدة قريباً</p>
+                </div>
+            }
+        </div>
+    </div>
+
+    <script>
+        // أي كود JavaScript إضافي
+    </script>
+
+</body>
+</html>

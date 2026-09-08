@@ -1,0 +1,1195 @@
+﻿
+@model List<RealEstateWebApp.Models.PropertyRequest>
+@using RealEstateWebApp.Models
+@using Microsoft.AspNetCore.Identity
+@inject SignInManager<ApplicationUser> SignInManager
+@{
+    ViewData["Title"] = "طلباتي";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>طلباتي | SYRELIS</title>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+    <style>
+        :root {
+            --dark: #192e43;
+            --gold: #d4af37;
+            --gray: #51596a;
+            --white: #ffffff;
+            --gold-light: #f4e5c2;
+            --gold-dark: #917005;
+            --border: #e8e4dc;
+            --bg-light: #f8f9fa;
+            --shadow: 0 4px 16px rgba(11, 19, 32, 0.08);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(126deg, rgba(11, 19, 32, 0.85), rgb(11 19 32 / 62%)), url(https://images.unsplash.com/photo-1600585154526-990dced4db0d?q=80&w=2070&auto=format);
+            background-position: center;
+            background-attachment: fixed;
+            font-family: "Tajawal", sans-serif;
+            color: var(--gold);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .navbar {
+            background: rgba(11, 19, 32, 0.96);
+            padding: 0 1rem;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.4);
+            justify-content: space-between;
+            box-shadow: 0px 15px 30px -10px rgb(23, 22, 70);
+            position: sticky;
+            top: 0;
+            z-index: 2000;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+            .navbar .logo {
+                width: 82px;
+                margin: 8px 0;
+                flex-shrink: 0;
+            }
+
+            .navbar .nav-links {
+                display: flex;
+                gap: 30px;
+                list-style: none;
+                flex-wrap: wrap;
+                justify-content: center;
+                padding: 0;
+                margin: 0;
+                align-items: center;
+                flex: 1;
+            }
+
+                .navbar .nav-links a {
+                    color: #f2efea;
+                    text-decoration: none;
+                    font-weight: 600;
+                    font-size: 0.95rem;
+                    transition: 0.3s;
+                    white-space: nowrap;
+                }
+
+                    .navbar .nav-links a:hover {
+                        color: #d4af37;
+                    }
+
+        .navbar-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-left: auto;
+        }
+
+        .user-avatar {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #d4af37, #b8941f);
+            color: #0b1320;
+            font-weight: 800;
+            font-size: 1.1rem;
+            font-family: 'Tajawal', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid rgba(212, 175, 55, 0.4);
+            box-shadow: 0 2px 10px rgba(212, 175, 55, 0.2);
+            text-decoration: none;
+            user-select: none;
+            position: relative;
+        }
+
+            .user-avatar:hover {
+                transform: scale(1.08);
+                box-shadow: 0 4px 20px rgba(212, 175, 55, 0.4);
+                border-color: #d4af37;
+            }
+
+            .user-avatar .tooltip {
+                position: absolute;
+                top: 110%;
+                left: 50%;
+                transform: translateX(-50%);
+                background: #0b1320;
+                color: #d4af37;
+                padding: 6px 14px;
+                border-radius: 8px;
+                font-size: 0.75rem;
+                font-weight: 600;
+                white-space: nowrap;
+                opacity: 0;
+                visibility: hidden;
+                transition: all 0.3s ease;
+                border: 1px solid rgba(212, 175, 55, 0.2);
+                pointer-events: none;
+                font-family: 'Tajawal', sans-serif;
+            }
+
+            .user-avatar:hover .tooltip {
+                opacity: 1;
+                visibility: visible;
+                top: 120%;
+            }
+
+            .user-avatar .tooltip::before {
+                content: '';
+                position: absolute;
+                bottom: 100%;
+                left: 50%;
+                transform: translateX(-50%);
+                border: 6px solid transparent;
+                border-bottom-color: #0b1320;
+            }
+
+        .login-btn-nav {
+            background: transparent;
+            border: 1.5px dashed #d4af37;
+            color: #d4af37;
+            padding: 10px 22px;
+            border-radius: 40px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            font-family: 'Tajawal', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+            .login-btn-nav:hover {
+                background: #d4af37;
+                border: 1px solid rgb(50, 39, 11);
+                color: #0b1320;
+                transform: translateY(-2px);
+                box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+            }
+
+        .page-header {
+            padding: 30px 35px;
+            margin-bottom: 49px;
+            box-shadow: 0 8px 24px rgba(11, 19, 32, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 20px;
+            width: 100%;
+            border-bottom: 2px solid #e2bd46;
+        }
+
+        .back-button {
+            width: 57px;
+            height: 54px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 12px 25px;
+            background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+            border: 2px solid var(--white);
+            border-radius: 12px;
+            color: var(--dark);
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            font-family: "Tajawal", sans-serif;
+        }
+
+        .page-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .page-title h1 {
+            color: #e2bd46 !important;
+            margin: 0;
+            font-size: 2rem;
+            font-weight: 800;
+        }
+
+        .page-title p {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1rem;
+            margin: 5px 0 0 0;
+        }
+
+        .card {
+            max-width: 100%;
+            background: var(--white);
+            border-radius: 20px;
+            padding: 28px;
+            margin-top: 30px;
+            margin-bottom: 61px;
+        }
+
+        .card-header {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--dark);
+            margin-bottom: 22px;
+            padding-bottom: 14px;
+            border-bottom: 2px solid var(--bg-light);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+            .card-header .icon-circle {
+                width: 40px;
+                height: 40px;
+                background: #192e43;
+                border-radius: 16px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: #ffd754;
+                font-size: 1.2rem;
+            }
+
+        .table-wrap {
+            overflow-x: auto;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .needs-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+            table-layout: fixed;
+        }
+
+            .needs-table th {
+                background: var(--dark);
+                color: #ffffff;
+                padding: 10px 6px;
+                text-align: center;
+                font-weight: 700;
+                white-space: nowrap;
+                font-size: 0.8rem;
+            }
+
+            .needs-table td {
+                padding: 10px 6px;
+                text-align: center;
+                border-bottom: 1px solid var(--border);
+                color: var(--dark);
+                vertical-align: middle;
+                word-wrap: break-word;
+                font-size: 0.8rem;
+            }
+
+            .needs-table tr:hover {
+                background: #f8f6f0;
+            }
+
+            .needs-table th:nth-child(1) {
+                width: 7%;
+            }
+
+            .needs-table th:nth-child(2) {
+                width: 12%;
+            }
+
+            .needs-table th:nth-child(3) {
+                width: 9%;
+            }
+
+            .needs-table th:nth-child(4) {
+                width: 9%;
+            }
+
+            .needs-table th:nth-child(5) {
+                width: 9%;
+            }
+
+            .needs-table th:nth-child(6) {
+                width: 9%;
+            }
+
+            .needs-table th:nth-child(7) {
+                width: 12%;
+            }
+
+            .needs-table th:nth-child(8) {
+                width: 10%;
+            }
+
+            .needs-table th:nth-child(9) {
+                width: 8%;
+            }
+
+            .needs-table th:nth-child(10) {
+                width: 8%;
+            }
+
+        .btn-icon-sm {
+            width: 30px;
+            height: 30px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.3s;
+            font-size: 0.75rem;
+        }
+
+        .btn-delete {
+            border: 1px solid #937b45;
+            background: var(--gold-light);
+            color: var(--dark);
+        }
+
+            .btn-delete:hover {
+                background: var(--gold);
+                color: var(--white);
+            }
+
+        .btn-contact-sm {
+            border: 1px solid #44d264;
+            background: #d4edda;
+            color: #155724;
+        }
+
+            .btn-contact-sm:hover {
+                background: #28a745;
+                color: white;
+            }
+
+        .empty-state {
+            text-align: center;
+            padding: 65px 20px;
+            background: var(--bg-light);
+            border-radius: 20px;
+            border: 2px dashed rgba(26, 27, 71, 0.44);
+        }
+
+            .empty-state i {
+                font-size: 3rem;
+                color: var(--gold);
+                margin-bottom: 15px;
+            }
+
+            .empty-state h3 {
+                color: var(--dark);
+                font-size: 1.5rem;
+            }
+
+            .empty-state p {
+                color: var(--gray);
+            }
+
+        .btn-primary {
+            background: var(--dark);
+            color: #ffffff;
+            padding: 12px 26px;
+            border: none;
+            border-radius: 10px;
+            font-family: "Tajawal", sans-serif;
+            font-size: 0.98rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            text-decoration: none;
+            transition: 0.3s;
+        }
+
+            .btn-primary:hover {
+                background: #ffffff;
+                color: #1a3250;
+            }
+
+        .success-msg {
+            background: rgba(34, 197, 94, 0.15);
+            border: 1px solid #22c55e;
+            color: #22c55e;
+            padding: 12px 20px;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        /* ===== مودالات كحلي ودهبي ===== */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+        }
+
+            .modal-overlay.active {
+                display: flex !important;
+            }
+
+        .modal-overlay-contact {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+        }
+
+            .modal-overlay-contact.active {
+                display: flex !important;
+            }
+
+        .modal-card {
+            background: linear-gradient(145deg, #ffffff, #f8f6f0);
+            border-radius: 28px;
+            max-width: 450px;
+            width: 90%;
+            padding: 40px 35px;
+            text-align: center;
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(212, 175, 55, 0.3);
+            position: relative;
+            animation: modalFadeIn 0.3s ease;
+        }
+
+        @@keyframes modalFadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9) translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .modal-card .modal-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--dark), #1a3355);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 18px;
+            border: 3px solid var(--gold);
+            box-shadow: 0 0 30px rgba(212, 175, 55, 0.2);
+        }
+
+            .modal-card .modal-icon i {
+                font-size: 2.5rem;
+                color: var(--gold);
+            }
+
+            .modal-card .modal-icon.danger i {
+                color: #ff6b6b;
+            }
+
+        .modal-card h3 {
+            color: var(--dark);
+            font-size: 1.6rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+        }
+
+        .modal-card p {
+            color: var(--gray);
+            font-size: 1.05rem;
+            line-height: 1.8;
+            margin-bottom: 28px;
+        }
+
+        .modal-card .modal-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+            .modal-card .modal-buttons .btn-modal {
+                padding: 12px 35px;
+                border: none;
+                border-radius: 12px;
+                font-weight: 700;
+                cursor: pointer;
+                font-size: 1rem;
+                font-family: 'Tajawal', sans-serif;
+                transition: all 0.3s ease;
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+            .modal-card .modal-buttons .btn-cancel {
+                background: #e8e8ec;
+                color: var(--gray);
+                border: 2px solid transparent;
+            }
+
+                .modal-card .modal-buttons .btn-cancel:hover {
+                    background: #d5d5dd;
+                    transform: translateY(-2px);
+                }
+
+            .modal-card .modal-buttons .btn-confirm-delete {
+                background: linear-gradient(135deg, var(--dark), #1a3355);
+                color: var(--gold);
+                border: 2px solid var(--gold);
+            }
+
+                .modal-card .modal-buttons .btn-confirm-delete:hover {
+                    background: linear-gradient(135deg, #dc3545, #c82333);
+                    color: #ffffff;
+                    border-color: #dc3545;
+                    transform: translateY(-2px);
+                    box-shadow: 0 8px 25px rgba(220, 53, 69, 0.3);
+                }
+
+            .modal-card .modal-buttons .btn-close-modal {
+                background: linear-gradient(135deg, var(--dark), #1a3355);
+                color: var(--gold);
+                border: 2px solid var(--gold);
+                padding: 12px 35px;
+                border-radius: 12px;
+                font-weight: 700;
+                cursor: pointer;
+                font-size: 1rem;
+                font-family: 'Tajawal', sans-serif;
+                transition: all 0.3s ease;
+            }
+
+                .modal-card .modal-buttons .btn-close-modal:hover {
+                    background: var(--gold);
+                    color: var(--dark);
+                    transform: translateY(-2px);
+                    box-shadow: 0 8px 25px rgba(212, 175, 55, 0.3);
+                }
+
+        .modal-card .contact-info {
+            text-align: right;
+            margin: 20px 0;
+        }
+
+            .modal-card .contact-info .label {
+                color: var(--gray);
+                font-size: 0.9rem;
+                margin-bottom: 5px;
+                font-weight: 500;
+            }
+
+            .modal-card .contact-info .value {
+                color: var(--dark);
+                font-size: 1.2rem;
+                font-weight: 700;
+                direction: ltr;
+                text-align: center;
+                background: var(--bg-light);
+                padding: 12px;
+                border-radius: 10px;
+                border: 2px solid var(--border);
+                transition: 0.3s;
+            }
+
+                .modal-card .contact-info .value:hover {
+                    border-color: var(--gold);
+                }
+
+        .modal-card .divider {
+            width: 60px;
+            height: 3px;
+            background: linear-gradient(to left, var(--gold), var(--gold-dark));
+            margin: 0 auto 20px;
+            border-radius: 2px;
+        }
+
+        /* ===== رسالة منبثقة مخصصة ===== */
+        @@keyframes alertFadeIn {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.8);
+            }
+
+            to {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+
+        @@keyframes alertFadeOut {
+            from {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+            }
+
+            to {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.8);
+            }
+        }
+
+        .custom-alert {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 999999;
+            animation: alertFadeIn 0.4s ease;
+            direction: rtl;
+            text-align: center;
+            padding: 30px 50px;
+            border-radius: 20px;
+            font-size: 1.3rem;
+            font-weight: 700;
+            font-family: 'Tajawal', sans-serif;
+            min-width: 300px;
+            max-width: 500px;
+            box-shadow: 0 25px 80px rgba(0,0,0,0.7);
+        }
+
+            .custom-alert.success {
+                background: linear-gradient(135deg, #192e43, #1a3355);
+                color: #d4af37;
+                border: 2px solid #d4af37;
+                box-shadow: 0 25px 80px rgba(0,0,0,0.7), 0 0 0 2px rgba(212, 175, 55, 0.3);
+            }
+
+            .custom-alert.error {
+                background: linear-gradient(135deg, #192e43, #1a3355);
+                color: #ff6b6b;
+                border: 2px solid #ff6b6b;
+                box-shadow: 0 25px 80px rgba(0,0,0,0.7), 0 0 0 2px rgba(255, 107, 107, 0.3);
+            }
+
+            .custom-alert .alert-icon {
+                font-size: 3rem;
+                margin-bottom: 10px;
+            }
+
+            .custom-alert.success .alert-icon {
+                color: #d4af37;
+            }
+
+            .custom-alert.error .alert-icon {
+                color: #ff6b6b;
+            }
+
+            .custom-alert.fade-out {
+                animation: alertFadeOut 0.5s ease forwards;
+            }
+
+        @@media screen and (max-width: 768px) {
+            .navbar {
+                flex-direction: column;
+                padding: 10px;
+            }
+
+                .navbar .nav-links {
+                    gap: 12px;
+                }
+
+                    .navbar .nav-links a {
+                        font-size: 0.8rem;
+                    }
+
+            .container {
+                padding: 1rem;
+            }
+
+            .page-header {
+                flex-direction: column;
+                text-align: center;
+                padding: 20px;
+            }
+
+            .page-title h1 {
+                font-size: 1.4rem;
+            }
+
+            .card {
+                padding: 16px;
+            }
+
+            .needs-table {
+                min-width: 700px;
+                font-size: 0.7rem;
+            }
+
+                .needs-table th, .needs-table td {
+                    padding: 6px 4px;
+                    font-size: 0.65rem;
+                }
+
+            .btn-icon-sm {
+                width: 26px;
+                height: 26px;
+                font-size: 0.65rem;
+            }
+
+            .user-avatar {
+                width: 36px;
+                height: 36px;
+                font-size: 0.9rem;
+            }
+
+            .login-btn-nav {
+                padding: 8px 16px;
+                font-size: 0.75rem;
+            }
+
+            .navbar-right {
+                gap: 10px;
+                margin-left: 0;
+            }
+
+            .modal-card {
+                padding: 30px 25px;
+            }
+
+                .modal-card .modal-buttons .btn-modal {
+                    padding: 10px 25px;
+                    font-size: 0.9rem;
+                }
+
+            .custom-alert {
+                padding: 25px 30px;
+                font-size: 1.1rem;
+                min-width: 250px;
+                max-width: 400px;
+            }
+        }
+
+        @@media screen and (max-width: 480px) {
+            .navbar .nav-links {
+                gap: 8px;
+            }
+
+                .navbar .nav-links a {
+                    font-size: 0.7rem;
+                }
+
+            .container {
+                padding: 0.5rem;
+            }
+
+            .page-header {
+                padding: 15px;
+            }
+
+            .page-title h1 {
+                font-size: 1.2rem;
+            }
+
+            .card {
+                padding: 12px;
+            }
+
+            .needs-table {
+                min-width: 550px;
+                font-size: 0.55rem;
+            }
+
+                .needs-table th, .needs-table td {
+                    padding: 4px 2px;
+                    font-size: 0.5rem;
+                }
+
+            .btn-icon-sm {
+                width: 22px;
+                height: 22px;
+                font-size: 0.55rem;
+            }
+
+            .modal-card {
+                padding: 25px 20px;
+            }
+
+                .modal-card .modal-icon {
+                    width: 60px;
+                    height: 60px;
+                }
+
+                    .modal-card .modal-icon i {
+                        font-size: 1.8rem;
+                    }
+
+                .modal-card h3 {
+                    font-size: 1.3rem;
+                }
+
+                .modal-card p {
+                    font-size: 0.95rem;
+                }
+
+                .modal-card .modal-buttons {
+                    flex-direction: column;
+                    align-items: stretch;
+                }
+
+                    .modal-card .modal-buttons .btn-modal {
+                        justify-content: center;
+                        padding: 12px 20px;
+                    }
+
+            .custom-alert {
+                padding: 20px 25px;
+                font-size: 1rem;
+                min-width: 200px;
+                max-width: 350px;
+            }
+
+                .custom-alert .alert-icon {
+                    font-size: 2.2rem;
+                }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ========== نافبار ========== -->
+    <nav class="navbar">
+        <img class="logo" src="/image/hero.png" alt="SYRELIS" />
+        <ul class="nav-links">
+           <li><a href="/Home/Index?skipRedirect=true"><span class="link_span">الرئيسية</span></a></li>
+            <li><a href="/Properties/Create"><span class="link_span">أعلن عن عقارك</span></a></li>
+            <li><a href="/Search/Index"><span class="link_span">ابحث عن عقارك</span></a></li>
+            <li><a href="@Url.Action("MyFavorites", "Properties")"><span class="link_span">محفوظاتي</span></a></li>
+           <li> <a href="/Home/Index?skipRedirect=true#contactSection" id="contactNavLink"> <span class="link_span">تواصل معنا</span>  </a></li>
+        </ul>
+        <div class="navbar-right">
+            @if (SignInManager.IsSignedIn(User))
+            {
+                var userName = User.Identity?.Name ?? "مستخدم";
+                var firstLetter = userName.Length > 0 ? userName[0].ToString().ToUpper() : "?";
+                <div class="user-avatar">
+                    @firstLetter
+                    <span class="tooltip">@userName</span>
+                </div>
+            }
+            else
+            {
+                <button class="login-btn-nav" id="openModalBtn">
+                    <i class="fas fa-sign-in-alt" style="margin-left: 6px;"></i> تسجيل الدخول
+                </button>
+            }
+        </div>
+    </nav>
+
+    <div class="container">
+        <partial name="_Tabs" />
+
+        <div class="page-header">
+            <div class="page-info">
+                <a href="/" class="back-button"><i class="fas fa-arrow-right"></i></a>
+                <div class="page-title">
+                    <h1>طلباتي</h1>
+                    <p>جميع الطلبات التي نشرتها</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <div class="icon-circle"><i class="fa-solid fa-list-check"></i></div>
+                طلباتي
+            </div>
+
+            @if (TempData["Success"] != null)
+            {
+                <div class="success-msg">
+                    <i class="fa-solid fa-check-circle"></i> @TempData["Success"]
+                </div>
+            }
+
+            @if (Model != null && Model.Any())
+            {
+                <div class="table-wrap">
+                    <table class="needs-table">
+                        <thead>
+                            <tr>
+                                <th>التاريخ</th>
+                                <th>عنوان الطلب</th>
+                                <th>نوع العقار</th>
+                                <th>طبيعة الطلب</th>
+                                <th>المدينة</th>
+                                <th>الحي</th>
+                                <th>الميزانية</th>
+                                <th>المساحة</th>
+                                <th>تواصل</th>
+                                <th>حذف</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var req in Model)
+                            {
+                                <tr>
+                                    <td>@req.CreatedAt.ToString("yyyy/MM/dd")</td>
+                                    <td style="font-weight:600; color:var(--dark); font-size:0.8rem;">@(req.Title ?? "-")</td>
+                                    <td>@(req.PropertyType?.NameAr ?? "-")</td>
+                                    <td>@(req.Status ?? "-")</td>
+                                    <td>@(req.City?.NameAr ?? "-")</td>
+                                    <td>@(req.Neighborhood ?? "-")</td>
+                                    <td>
+                                        @if (req.MinPrice.HasValue || req.MaxPrice.HasValue)
+                                        {
+                                            <span>@(req.MinPrice?.ToString("N0") ?? "0") - @(req.MaxPrice?.ToString("N0") ?? "不限")</span>
+                                        }
+                                        else
+                                        {
+                                            <span>-</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (req.MinArea.HasValue || req.MaxArea.HasValue)
+                                        {
+                                            <span>@(req.MinArea?.ToString("N0") ?? "0") - @(req.MaxArea?.ToString("N0") ?? "不限") م²</span>
+                                        }
+                                        else
+                                        {
+                                            <span>-</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (!string.IsNullOrEmpty(req.PhoneNumber))
+                                        {
+                                            <button class="btn-icon-sm btn-contact-sm" onclick="openContactModal('@req.PhoneNumber', '@req.Email')" title="تواصل">
+                                                <i class="fa-solid fa-phone"></i>
+                                            </button>
+                                        }
+                                    </td>
+                                    <td>
+                                        <button class="btn-icon-sm btn-delete" onclick="openDeleteModal(@req.Id)" title="حذف">
+                                            <i class="fa-solid fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="empty-state">
+                    <i class="fa-regular fa-clipboard"></i>
+                    <h3>لا توجد طلبات</h3>
+                    <p>قم بنشر طلبك الأول الآن</p>
+                    <a href="/PropertyRequest/Create" class="btn-primary">
+                        <i class="fa-solid fa-plus"></i> طلب جديد
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- ===== مودال تأكيد الحذف (كحلي ودهبي) ===== -->
+    <div id="deleteModal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-icon danger">
+                <i class="fa-solid fa-trash-can"></i>
+            </div>
+            <h3>تأكيد الحذف</h3>
+            <div class="divider"></div>
+            <p>هل أنت متأكد من حذف هذا الطلب؟<br />لا يمكن التراجع عن هذا الإجراء.</p>
+            <div class="modal-buttons">
+                <button class="btn-modal btn-cancel" onclick="closeDeleteModal()">
+                    <i class="fa-solid fa-times"></i> إلغاء
+                </button>
+                <button class="btn-modal btn-confirm-delete" onclick="confirmDelete()">
+                    <i class="fa-solid fa-trash"></i> تأكيد الحذف
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== مودال التواصل (كحلي ودهبي) ===== -->
+    <div id="contactModal" class="modal-overlay-contact">
+        <div class="modal-card">
+            <div class="modal-icon">
+                <i class="fas fa-phone-alt"></i>
+            </div>
+            <h3 style="color:var(--dark);">معلومات التواصل</h3>
+            <div class="divider"></div>
+
+            <div class="contact-info">
+                <div class="label"><i class="fa-solid fa-phone" style="color:var(--gold);"></i> رقم الهاتف:</div>
+                <div class="value" id="contactPhone">-</div>
+            </div>
+
+            <div class="contact-info">
+                <div class="label"><i class="fa-solid fa-envelope" style="color:var(--gold);"></i> البريد الإلكتروني:</div>
+                <div class="value" id="contactEmail">-</div>
+            </div>
+
+            <div class="modal-buttons" style="margin-top: 10px;">
+                <button class="btn-modal btn-close-modal" onclick="closeContactModal()">
+                    <i class="fa-solid fa-xmark"></i> إغلاق
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== AntiForgeryToken ===== -->
+    @Html.AntiForgeryToken()
+
+    <script>
+        // ===== الحذف =====
+        var deleteId = 0;
+
+        function openDeleteModal(id) {
+            deleteId = id;
+            document.getElementById('deleteModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeDeleteModal() {
+            document.getElementById('deleteModal').classList.remove('active');
+            document.body.style.overflow = '';
+            deleteId = 0;
+        }
+
+        function confirmDelete() {
+            if (deleteId === 0) return;
+
+            var token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+
+            fetch('/PropertyRequest/Delete/' + deleteId, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': token || ''
+                },
+                body: JSON.stringify({ id: deleteId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                closeDeleteModal();
+                if (data.success) {
+                    showCustomAlert('✅ ' + data.message, 'success');
+                } else {
+                    showCustomAlert('❌ ' + data.message, 'error');
+                }
+            })
+            .catch(() => {
+                closeDeleteModal();
+                showCustomAlert('❌ حدث خطأ أثناء الحذف', 'error');
+            });
+        }
+
+        // ===== التواصل =====
+        function openContactModal(phone, email) {
+            document.getElementById('contactPhone').textContent = phone || '-';
+            document.getElementById('contactEmail').textContent = email || '-';
+            document.getElementById('contactModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeContactModal() {
+            document.getElementById('contactModal').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        // ===== رسالة منبثقة مخصصة =====
+        function showCustomAlert(message, type) {
+            // إزالة أي رسالة سابقة
+            var oldAlert = document.querySelector('.custom-alert');
+            if (oldAlert) {
+                oldAlert.remove();
+            }
+
+            var alertDiv = document.createElement('div');
+            alertDiv.className = 'custom-alert ' + type;
+
+            // إضافة الأيقونة
+            var iconDiv = document.createElement('div');
+            iconDiv.className = 'alert-icon';
+            iconDiv.innerHTML = type === 'success' ?
+                '<i class="fa-solid fa-check-circle"></i>' :
+                '<i class="fa-solid fa-circle-exclamation"></i>';
+
+            // إضافة النص
+            var textSpan = document.createElement('span');
+            textSpan.textContent = message.replace('✅ ', '').replace('❌ ', '');
+
+            alertDiv.appendChild(iconDiv);
+            alertDiv.appendChild(textSpan);
+
+            document.body.appendChild(alertDiv);
+
+            // إزالة الرسالة بعد 3 ثواني
+            setTimeout(function() {
+                alertDiv.classList.add('fade-out');
+                setTimeout(function() {
+                    if (alertDiv && alertDiv.parentNode) {
+                        alertDiv.remove();
+                    }
+                }, 500);
+            }, 3000);
+        }
+
+        // إغلاق المودالات عند الضغط على الخلفية
+        document.getElementById('deleteModal').addEventListener('click', function(e) {
+            if (e.target === this) closeDeleteModal();
+        });
+
+        document.getElementById('contactModal').addEventListener('click', function(e) {
+            if (e.target === this) closeContactModal();
+        });
+
+        // إغلاق المودال بـ Escape
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                if (document.getElementById('deleteModal').classList.contains('active')) {
+                    closeDeleteModal();
+                }
+                if (document.getElementById('contactModal').classList.contains('active')) {
+                    closeContactModal();
+                }
+            }
+        });
+    </script>
+
+</body>
+</html>
+```

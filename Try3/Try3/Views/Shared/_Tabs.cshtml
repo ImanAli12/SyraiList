@@ -1,0 +1,68 @@
+﻿@{
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+}
+
+<style>
+    .tab-btn-custom {
+        flex: 1;
+        background: transparent;
+        border: none;
+        padding: 13px 18px;
+        font-family: 'Tajawal', sans-serif;
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #51596a;
+        cursor: pointer;
+        border-radius: 10px;
+        transition: all 0.25s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        text-decoration: none;
+    }
+
+        .tab-btn-custom i {
+            font-size: 1.05rem;
+        }
+
+        .tab-btn-custom:hover {
+            color: #d4af37;
+        }
+
+        .tab-btn-custom.active {
+            background: #192e43;
+            color: #fffefb;
+            box-shadow: -9px 4px 16px rgba(10, 24, 47, 0.45);
+        }
+
+    .tabs-container {
+        display: flex;
+        gap: 6px;
+        margin-top: 25px;
+        margin-bottom: 28px;
+        background: #f8f9fa;
+        padding: 6px;
+        border-radius: 12px;
+        flex-wrap: wrap;
+    }
+</style>
+
+<div class="tabs-container">
+    <a href="/Properties/MyFavorites" class="tab-btn-custom @(currentAction == "MyFavorites" ? "active" : "")">
+        <i class="fa-solid fa-heart"></i> المفضلة
+    </a>
+    <a href="/Properties/Create" class="tab-btn-custom @(currentAction == "Create" && currentController == "Properties" ? "active" : "")">
+        <i class="fa-solid fa-plus"></i> إضافة عقار
+    </a>
+    <a href="/Properties/MyProperties" class="tab-btn-custom @(currentAction == "MyProperties" ? "active" : "")">
+        <i class="fa-solid fa-building"></i> عقاراتي
+    </a>
+    <a href="/PropertyRequest/Create" class="tab-btn-custom @(currentAction == "Create" && currentController == "PropertyRequest" ? "active" : "")">
+        <i class="fas fa-home"></i> اطلب عقار
+    </a>
+    <a href="/PropertyRequest/MyRequests" class="tab-btn-custom @(currentAction == "MyRequests" && currentController == "PropertyRequest" ? "active" : "")">
+        <i class="fa-solid fa-list-check"></i> طلباتي
+    </a>
+</div>

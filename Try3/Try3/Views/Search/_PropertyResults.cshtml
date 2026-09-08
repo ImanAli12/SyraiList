@@ -1,0 +1,134 @@
+﻿@model IEnumerable<RealEstateWebApp.Models.Property>
+@using System
+
+@if (Model != null && Model.Any())
+{
+    <div class="card" style="margin-top: 30px;">
+        <div class="card-header">
+            <div class="icon-circle"><i class="fa-solid fa-list"></i></div>
+            نتائج البحث
+            <span class="subtitle">@Model.Count() عقار</span>
+        </div>
+
+        @if (!string.IsNullOrEmpty(ViewBag.ClusterMessage))
+        {
+            <div style="background: #d4af37; color: #192e43; padding: 12px 20px; border-radius: 10px; margin-bottom: 20px; font-weight: bold; text-align: center;">
+                @ViewBag.ClusterMessage
+            </div>
+        }
+
+        <div class="property-grid">
+            @foreach (var property in Model)
+            {
+                // ✅ اختيار صورة عشوائية بناءً على نوع العقار
+                var imageBaseName = "default";
+                var imageList = new List<string> { "default.jpg" };
+
+                if (property.PropertyType?.NameAr != null)
+                {
+                    var typeName = property.PropertyType.NameAr;
+                    if (typeName.Contains("فيلا"))
+                    {
+                        imageList = new List<string> { "villa_1.jpg", "villa_2.jpg", "villa_3.jpg", "villa_4.jpg", "villa_5.jpg" };
+                    }
+                    else if (typeName.Contains("شقة"))
+                    {
+                        imageList = new List<string> { "apartment_1.jpg", "apartment_2.jpg", "apartment_3.jpg", "apartment_4.jpg", "apartment_5.jpg" };
+                    }
+                    else if (typeName.Contains("مكتب"))
+                    {
+                        imageList = new List<string> { "office_1.jpg", "office_2.jpg", "office_3.jpg", "office_4.jpg", "office_5.jpg" };
+                    }
+                    else if (typeName.Contains("أرض زراعية"))
+                    {
+                        imageList = new List<string> { "farmland_1.jpg", "farmland_2.jpg", "farmland_3.jpg", "farmland_4.jpg", "farmland_5.jpg" };
+                    }
+                }
+
+                var random = new Random();
+                var selectedImage = imageList[random.Next(imageList.Count)];
+                var imageUrl = "/image/" + selectedImage;
+
+                <a href="@Url.Action("DetailSearch", "Properties", new { code = property.Code })"
+                   style="text-decoration: none; color: inherit; display: block;">
+                    <div class="property-card">
+                        <div class="property-img">
+                            <img src="@imageUrl" alt="@property.Title" />
+                          
+                        </div>
+                        <div class="property-body">
+                            <div class="property-price">@property.Price.ToString("N0") @property.PriceCurrency</div>
+                            <div class="property-title">@property.Title</div>
+                            <div class="property-location">
+                                <i class="fa-solid fa-location-dot"></i>
+                                @(property.City?.NameAr ?? "") - @(property.Neighborhood ?? "")
+                            </div>
+                            <div class="property-features">
+                                <span><i class="fa-solid fa-vector-square"></i> @property.Area م²</span>
+                                <span><i class="fa-solid fa-bed"></i> @property.Rooms غرف</span>
+                                <span><i class="fa-solid fa-bath"></i> @property.Bathrooms حمامات</span>
+                                @if (property.Floor.HasValue)
+                                {
+                                    <span><i class="fa-solid fa-layer-group"></i> طابق @property.Floor</span>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            }
+        </div>
+    </div>
+}
+else
+{
+    <div class="card" style="margin-top: 30px;">
+        <div class="empty-state">
+            <i class="fa-regular fa-face-frown"></i>
+            <h3>لا توجد نتائج</h3>
+            <p>لم نعثر على عقارات تطابق معايير البحث. حاول تعديل الفلاتر.</p>
+            @if (!string.IsNullOrEmpty(ViewBag.NoDataMessage))
+            {
+                <p style="color:#d4af37; margin-top:8px;">💡 @ViewBag.NoDataMessage</p>
+            }
+        </div>
+    </div>
+}
+
+<!-- ========================================================== -->
+<!-- ✅ أزرار الترقيم (Pagination)                               -->
+<!-- ========================================================== -->
+@if (ViewBag.TotalCount != null && ViewBag.TotalCount > 0)
+{
+    var totalPages = (int)Math.Ceiling((double)ViewBag.TotalCount / ViewBag.PageSize);
+    var currentPage = ViewBag.CurrentPage;
+
+    <div class="pagination-container" style="display:flex; justify-content:center; gap:8px; margin-top:25px; flex-wrap:wrap; direction:ltr;">
+        @if (currentPage > 1)
+        {
+            <button class="btn btn-secondary" onclick="loadPage(@(currentPage - 1))" style="padding:6px 14px; border-radius:6px; background:#192e43; color:#fff; border:none; cursor:pointer;">
+                <i class="fa-solid fa-chevron-right"></i> السابق
+            </button>
+        }
+
+        @for (int i = 1; i <= totalPages && i <= 10; i++)
+        {
+            if (i == currentPage)
+            {
+                <span style="background:#d4af37; color:#fff; padding:6px 14px; border-radius:6px; font-weight:bold;">@i</span>
+            }
+            else
+            {
+                <button onclick="loadPage(@i)" style="background:transparent; border:1px solid #d4af37; color:#d4af37; padding:6px 14px; border-radius:6px; cursor:pointer;">
+                    @i
+                </button>
+            }
+        }
+
+        @if (currentPage < totalPages)
+        {
+            <button class="btn btn-primary" onclick="loadPage(@(currentPage + 1))" style="padding:6px 14px; border-radius:6px; background:#d4af37; color:#192e43; border:none; cursor:pointer;">
+                التالي <i class="fa-solid fa-chevron-left"></i>
+            </button>
+        }
+    </div>
+}

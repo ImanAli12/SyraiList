@@ -1,0 +1,1328 @@
+﻿@model List<RealEstateWebApp.Models.Property>
+@using RealEstateWebApp.Models
+@using Microsoft.AspNetCore.Identity
+@inject SignInManager<ApplicationUser> SignInManager
+@{
+    ViewData["Title"] = "عقاراتي";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>عقاراتي | SYRELIS</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+    <style>
+        :root {
+            --dark: #192e43;
+            --gold: #d4af37;
+            --gray: #51596a;
+            --white: #ffffff;
+            --gold-light: #f4e5c2;
+            --gold-dark: #917005;
+            --border: #e8e4dc;
+            --bg-light: #f8f9fa;
+            --shadow: 0 4px 16px rgba(11, 19, 32, 0.08);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(126deg, rgba(11, 19, 32, 0.85), rgb(11 19 32 / 62%)), url(https://images.unsplash.com/photo-1600585154526-990dced4db0d?q=80&w=2070&auto=format);
+            background-position: center;
+            background-attachment: fixed;
+            font-family: "Tajawal", sans-serif;
+            color: var(--gold);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .navbar {
+            background: rgba(11, 19, 32, 0.96);
+            padding: 0 1rem;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.4);
+            justify-content: space-between;
+            box-shadow: 0px 15px 30px -10px rgb(23, 22, 70);
+            position: sticky;
+            top: 0;
+            z-index: 2000;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+            .navbar .logo {
+                width: 82px;
+                margin: 8px 0;
+                flex-shrink: 0;
+            }
+
+            .navbar .nav-links {
+                display: flex;
+                gap: 30px;
+                list-style: none;
+                flex-wrap: wrap;
+                justify-content: center;
+                padding: 0;
+            }
+
+                .navbar .nav-links a {
+                    color: #f2efea;
+                    text-decoration: none;
+                    font-weight: 600;
+                    font-size: 0.95rem;
+                    transition: 0.3s;
+                    white-space: nowrap;
+                }
+
+                    .navbar .nav-links a:hover {
+                        color: #d4af37;
+                    }
+
+        .navbar-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-right: 3cm;
+        }
+
+        .user-avatar {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #d4af37, #b8941f);
+            color: #0b1320;
+            font-weight: 800;
+            font-size: 1.1rem;
+            font-family: 'Tajawal', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid rgba(212, 175, 55, 0.4);
+            box-shadow: 0 2px 10px rgba(212, 175, 55, 0.2);
+            text-decoration: none;
+            user-select: none;
+            position: relative;
+        }
+
+            .user-avatar:hover {
+                transform: scale(1.08);
+                box-shadow: 0 4px 20px rgba(212, 175, 55, 0.4);
+                border-color: #d4af37;
+            }
+
+            .user-avatar .tooltip {
+                position: absolute;
+                top: 110%;
+                left: 50%;
+                transform: translateX(-50%);
+                background: #0b1320;
+                color: #d4af37;
+                padding: 6px 14px;
+                border-radius: 8px;
+                font-size: 0.75rem;
+                font-weight: 600;
+                white-space: nowrap;
+                opacity: 0;
+                visibility: hidden;
+                transition: all 0.3s ease;
+                border: 1px solid rgba(212, 175, 55, 0.2);
+                pointer-events: none;
+                font-family: 'Tajawal', sans-serif;
+            }
+
+            .user-avatar:hover .tooltip {
+                opacity: 1;
+                visibility: visible;
+                top: 120%;
+            }
+
+            .user-avatar .tooltip::before {
+                content: '';
+                position: absolute;
+                bottom: 100%;
+                left: 50%;
+                transform: translateX(-50%);
+                border: 6px solid transparent;
+                border-bottom-color: #0b1320;
+            }
+
+        .page-header {
+            padding: 30px 35px;
+            margin-bottom: 49px;
+            box-shadow: 0 8px 24px rgba(11, 19, 32, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 20px;
+            width: 100%;
+            border-bottom: 2px solid #e2bd46;
+        }
+
+        .back-button {
+            width: 57px;
+            height: 54px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 12px 25px;
+            background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+            border: 2px solid var(--white);
+            border-radius: 12px;
+            color: var(--dark);
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            font-family: "Tajawal", sans-serif;
+        }
+
+        .page-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .page-title h1 {
+            color: #e2bd46 !important;
+            margin: 0;
+            font-size: 2rem;
+            font-weight: 800;
+        }
+
+        .page-title p {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1rem;
+            margin: 5px 0 0 0;
+        }
+
+        .card {
+            max-width: 100%;
+            background: var(--white);
+            border-radius: 20px;
+            padding: 28px;
+            margin-top: 30px;
+            margin-bottom: 61px;
+        }
+
+        .card-header {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--dark);
+            margin-bottom: 22px;
+            padding-bottom: 14px;
+            border-bottom: 2px solid var(--bg-light);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+            .card-header .icon-circle {
+                width: 40px;
+                height: 40px;
+                background: #192e43;
+                border-radius: 16px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: #ffd754;
+                font-size: 1.2rem;
+            }
+
+        .table-wrap {
+            overflow-x: auto;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .needs-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+            table-layout: fixed;
+        }
+
+            .needs-table th {
+                background: var(--dark);
+                color: #ffffff;
+                padding: 14px 8px;
+                text-align: center;
+                font-weight: 800;
+                white-space: nowrap;
+            }
+
+            .needs-table td {
+                padding: 14px 8px;
+                text-align: center;
+                border-bottom: 1px solid var(--border);
+                color: var(--dark);
+                vertical-align: middle;
+                word-wrap: break-word;
+            }
+
+            .needs-table tr:hover {
+                background: #f8f6f0;
+            }
+
+        .prop-thumb {
+            width: 62px;
+            height: 62px;
+            border-radius: 9px;
+            object-fit: cover;
+            border: 2px solid var(--border);
+        }
+
+        .badge-sale {
+            background: var(--gold-light);
+            color: var(--dark);
+            border: 1px solid var(--gold);
+            padding: 5px 13px;
+            border-radius: 18px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            display: inline-block;
+        }
+
+        .status-published {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            padding: 5px 13px;
+            border-radius: 18px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            display: inline-block;
+        }
+
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+            padding: 5px 13px;
+            border-radius: 18px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            display: inline-block;
+        }
+
+        .status-sold {
+            background: #22c55e;
+            color: #ffffff;
+            border: 1px solid #16a34a;
+            padding: 5px 13px;
+            border-radius: 18px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+            .status-sold::before {
+                content: "✓";
+                font-weight: 900;
+            }
+
+        .actions-cell {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .btn-icon-sm {
+            width: 34px;
+            height: 34px;
+            border: none;
+            border-radius: 7px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.3s;
+        }
+
+        .btn-edit {
+            border: 1px solid #44d264;
+            background: #d4edda;
+            color: #155724;
+        }
+
+            .btn-edit:hover {
+                background: #28a745;
+                color: white;
+            }
+
+        .btn-delete {
+            border: 1px solid #937b45;
+            background: var(--gold-light);
+            color: var(--dark);
+        }
+
+            .btn-delete:hover {
+                background: var(--gold);
+                color: var(--white);
+            }
+
+        .btn-sold {
+            background: #e8e8ec;
+            color: var(--gray);
+            border: 2px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+            .btn-sold:hover {
+                border-color: var(--gold);
+                transform: scale(1.05);
+            }
+
+            .btn-sold.sold-active {
+                background: #22c55e;
+                color: #fff;
+                border-color: #22c55e;
+                box-shadow: 0 0 15px rgba(34, 197, 94, 0.3);
+            }
+
+                .btn-sold.sold-active:hover {
+                    background: #16a34a;
+                    border-color: #16a34a;
+                }
+
+        .btn-more {
+            background: var(--dark);
+            color: var(--gold);
+            border: 2px solid var(--gold);
+            padding: 6px 16px;
+            border-radius: 25px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.3s;
+            font-size: 0.8rem;
+            font-family: "Tajawal", sans-serif;
+        }
+
+            .btn-more:hover {
+                background: var(--gold);
+                color: var(--dark);
+            }
+
+        .btn {
+            padding: 12px 26px;
+            border: none;
+            border-radius: 10px;
+            font-family: "Tajawal", sans-serif;
+            font-size: 0.98rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: var(--dark);
+            color: #ffffff;
+            box-shadow: -1px 2px 9px rgb(11 19 32 / 73%);
+        }
+
+            .btn-primary:hover {
+                background: #ffffff;
+                color: #1a3250;
+            }
+
+        .pagination-container {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 25px;
+            flex-wrap: wrap;
+            direction: ltr;
+        }
+
+            .pagination-container .page-btn {
+                padding: 6px 14px;
+                border-radius: 6px;
+                cursor: pointer;
+                border: none;
+                font-family: 'Tajawal', sans-serif;
+                font-size: 0.9rem;
+                font-weight: 700;
+                transition: 0.3s;
+                text-decoration: none;
+                display: inline-flex;
+                align-items: center;
+                gap: 4px;
+            }
+
+                .pagination-container .page-btn.active {
+                    background: #d4af37;
+                    color: #fff;
+                }
+
+                .pagination-container .page-btn.inactive {
+                    background: transparent;
+                    border: 1px solid #d4af37;
+                    color: #d4af37;
+                }
+
+                    .pagination-container .page-btn.inactive:hover {
+                        background: #d4af37;
+                        color: #192e43;
+                    }
+
+                .pagination-container .page-btn.arrow {
+                    background: #192e43;
+                    color: #fff;
+                }
+
+                    .pagination-container .page-btn.arrow:hover {
+                        background: #d4af37;
+                        color: #192e43;
+                    }
+
+        .empty-state {
+            text-align: center;
+            padding: 65px 20px;
+            background: var(--bg-light);
+            border-radius: 20px;
+            border: 2px dashed rgba(26, 27, 71, 0.44);
+            transition: all 0.3s ease;
+        }
+
+            .empty-state:hover {
+                border-color: var(--gold);
+                box-shadow: 0 0 30px rgba(212, 175, 55, 0.05);
+            }
+
+            .empty-state .empty-icon {
+                font-size: 4rem;
+                color: var(--gold);
+                margin-bottom: 20px;
+                opacity: 0.7;
+                display: block;
+            }
+
+            .empty-state h3 {
+                color: var(--dark);
+                font-size: 1.5rem;
+                margin-bottom: 10px;
+                font-weight: 700;
+            }
+
+            .empty-state p {
+                color: var(--gray);
+                font-size: 1rem;
+                margin-bottom: 25px;
+            }
+
+            .empty-state .btn-primary {
+                background: var(--dark);
+                color: #ffffff;
+                padding: 14px 35px;
+                border-radius: 12px;
+                font-size: 1rem;
+                border: 2px solid var(--gold);
+                transition: all 0.3s ease;
+                display: inline-flex;
+                align-items: center;
+                gap: 10px;
+                text-decoration: none;
+                font-family: 'Tajawal', sans-serif;
+            }
+
+                .empty-state .btn-primary:hover {
+                    background: var(--gold);
+                    color: var(--dark);
+                    transform: translateY(-3px);
+                    box-shadow: 0 10px 30px rgba(212, 175, 55, 0.3);
+                }
+
+        .success-msg {
+            background: rgba(34, 197, 94, 0.15);
+            border: 1px solid #22c55e;
+            color: #22c55e;
+            padding: 12px 20px;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .custom-notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 15px 30px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            z-index: 99999;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            font-family: 'Tajawal', sans-serif;
+        }
+
+            .custom-notification.success {
+                background: #22c55e;
+                color: #fff;
+            }
+
+            .custom-notification.error {
+                background: #dc3545;
+                color: #fff;
+            }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+        }
+
+            .modal-overlay.active {
+                display: flex !important;
+            }
+
+        .modal-card {
+            background: linear-gradient(145deg, #ffffff, #f8f6f0);
+            border-radius: 28px;
+            max-width: 450px;
+            width: 90%;
+            padding: 40px 35px;
+            text-align: center;
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(212, 175, 55, 0.3);
+            animation: modalFadeIn 0.3s ease;
+        }
+
+        @@keyframes modalFadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9) translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .modal-card .modal-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--dark), #1a3355);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 18px;
+            border: 3px solid var(--gold);
+            box-shadow: 0 0 30px rgba(212, 175, 55, 0.2);
+        }
+
+            .modal-card .modal-icon i {
+                font-size: 2.5rem;
+                color: var(--gold);
+            }
+
+            .modal-card .modal-icon.danger i {
+                color: #ff6b6b;
+            }
+
+        .modal-card h3 {
+            color: var(--dark);
+            font-size: 1.6rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+        }
+
+        .modal-card p {
+            color: var(--gray);
+            font-size: 1.05rem;
+            line-height: 1.8;
+            margin-bottom: 28px;
+        }
+
+        .modal-card .modal-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+            .modal-card .modal-buttons .btn-modal {
+                padding: 12px 35px;
+                border: none;
+                border-radius: 12px;
+                font-weight: 700;
+                cursor: pointer;
+                font-size: 1rem;
+                font-family: 'Tajawal', sans-serif;
+                transition: all 0.3s ease;
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+            .modal-card .modal-buttons .btn-cancel {
+                background: #e8e8ec;
+                color: var(--gray);
+                border: 2px solid transparent;
+            }
+
+                .modal-card .modal-buttons .btn-cancel:hover {
+                    background: #d5d5dd;
+                    transform: translateY(-2px);
+                }
+
+            .modal-card .modal-buttons .btn-confirm-delete {
+                background: linear-gradient(135deg, var(--dark), #1a3355);
+                color: var(--gold);
+                border: 2px solid var(--gold);
+            }
+
+                .modal-card .modal-buttons .btn-confirm-delete:hover {
+                    background: linear-gradient(135deg, #dc3545, #c82333);
+                    color: #ffffff;
+                    border-color: #dc3545;
+                    transform: translateY(-2px);
+                    box-shadow: 0 8px 25px rgba(220, 53, 69, 0.3);
+                }
+
+        .modal-card .divider {
+            width: 60px;
+            height: 3px;
+            background: linear-gradient(to left, var(--gold), var(--gold-dark));
+            margin: 0 auto 20px;
+            border-radius: 2px;
+        }
+
+        .modal-icon.warning i {
+            color: #f59e0b;
+        }
+
+        .modal-icon.success i {
+            color: #22c55e;
+        }
+
+        .modal-card .modal-buttons .btn-confirm-sold {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            color: #ffffff;
+            border: 2px solid #22c55e;
+        }
+
+            .modal-card .modal-buttons .btn-confirm-sold:hover {
+                background: linear-gradient(135deg, #16a34a, #15803d);
+                transform: translateY(-2px);
+                box-shadow: 0 8px 25px rgba(34, 197, 94, 0.3);
+            }
+
+        .modal-card .modal-buttons .btn-confirm-unsold {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: #ffffff;
+            border: 2px solid #f59e0b;
+        }
+
+            .modal-card .modal-buttons .btn-confirm-unsold:hover {
+                background: linear-gradient(135deg, #d97706, #b45309);
+                transform: translateY(-2px);
+                box-shadow: 0 8px 25px rgba(245, 158, 11, 0.3);
+            }
+
+        .modal-card .modal-buttons .btn-confirm-success {
+            background: linear-gradient(135deg, var(--dark), #1a3355);
+            color: var(--gold);
+            border: 2px solid var(--gold);
+        }
+
+            .modal-card .modal-buttons .btn-confirm-success:hover {
+                background: var(--gold);
+                color: var(--dark);
+                transform: translateY(-2px);
+                box-shadow: 0 8px 25px rgba(212, 175, 55, 0.3);
+            }
+
+        @@media (max-width: 768px) {
+            .navbar {
+                flex-direction: column;
+                padding: 10px;
+            }
+
+                .navbar .nav-links {
+                    gap: 15px;
+                }
+
+                    .navbar .nav-links a {
+                        font-size: 0.8rem;
+                    }
+
+            .container {
+                padding: 1rem;
+            }
+
+            .page-header {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .page-info {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .page-title h1 {
+                font-size: 1.4rem;
+            }
+
+            .card {
+                padding: 16px;
+            }
+
+            .table-wrap {
+                overflow-x: auto;
+            }
+
+            .needs-table {
+                min-width: 600px;
+                font-size: 0.6rem;
+                table-layout: fixed;
+            }
+
+                .needs-table th, .needs-table td {
+                    padding: 6px 3px;
+                    font-size: 0.55rem;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }
+
+            .prop-thumb {
+                width: 30px;
+                height: 30px;
+            }
+
+            .btn-icon-sm {
+                width: 22px;
+                height: 22px;
+                font-size: 0.5rem;
+            }
+
+            .btn-more {
+                padding: 2px 6px;
+                font-size: 0.5rem;
+                border-width: 1px;
+            }
+
+            .badge-sale, .status-published, .status-pending, .status-sold {
+                padding: 2px 4px;
+                font-size: 0.45rem;
+            }
+
+            .card-header {
+                font-size: 0.9rem;
+                padding-bottom: 8px;
+                margin-bottom: 12px;
+            }
+
+                .card-header .icon-circle {
+                    width: 30px;
+                    height: 30px;
+                    font-size: 0.9rem;
+                }
+
+            .actions-cell {
+                gap: 3px;
+            }
+
+            .success-msg {
+                font-size: 0.8rem;
+                padding: 8px 12px;
+            }
+
+            .empty-state {
+                padding: 40px 15px;
+            }
+
+                .empty-state .empty-icon {
+                    font-size: 3rem;
+                }
+
+                .empty-state h3 {
+                    font-size: 1.2rem;
+                }
+
+                .empty-state .btn-primary {
+                    padding: 10px 20px;
+                    font-size: 0.85rem;
+                }
+
+            .modal-card {
+                padding: 30px 25px;
+            }
+
+                .modal-card .modal-buttons .btn-modal {
+                    padding: 10px 25px;
+                    font-size: 0.9rem;
+                }
+
+            .pagination-container .page-btn {
+                padding: 4px 10px;
+                font-size: 0.75rem;
+            }
+        }
+
+        @@media (max-width: 480px) {
+            .navbar .nav-links {
+                gap: 8px;
+            }
+
+                .navbar .nav-links a {
+                    font-size: 0.7rem;
+                }
+
+            .container {
+                padding: 0.5rem;
+            }
+
+            .page-header {
+                padding: 15px;
+            }
+
+            .page-title h1 {
+                font-size: 1.2rem;
+            }
+
+            .card {
+                padding: 12px;
+            }
+
+            .needs-table {
+                min-width: 450px;
+                font-size: 0.5rem;
+            }
+
+                .needs-table th, .needs-table td {
+                    padding: 4px 2px;
+                    font-size: 0.45rem;
+                }
+
+            .btn-more {
+                padding: 2px 4px;
+                font-size: 0.4rem;
+            }
+
+            .btn-icon-sm {
+                width: 18px;
+                height: 18px;
+                font-size: 0.4rem;
+            }
+
+            .prop-thumb {
+                width: 25px;
+                height: 25px;
+            }
+
+            .empty-state {
+                padding: 30px 15px;
+            }
+
+                .empty-state .empty-icon {
+                    font-size: 2.5rem;
+                }
+
+                .empty-state h3 {
+                    font-size: 1rem;
+                }
+
+                .empty-state p {
+                    font-size: 0.85rem;
+                }
+
+                .empty-state .btn-primary {
+                    padding: 8px 16px;
+                    font-size: 0.75rem;
+                }
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <img class="logo" src="/image/hero.png" alt="SYRELIS" />
+        <ul class="nav-links">
+           <li><a href="/Home/Index?skipRedirect=true"><span class="link_span">الرئيسية</span></a></li>
+            <li><a href="/Properties/Create">أعلن عن عقارك</a></li>
+            <li><a href="/Search/Index"><span class="link_span">ابحث عن عقارك</span></a></li>
+            <li><a href="@Url.Action("MyFavorites", "Properties")">محفوظاتي</a></li>
+           <li> <a href="/Home/Index?skipRedirect=true#contactSection" id="contactNavLink"> <span class="link_span">تواصل معنا</span>  </a></li>
+        </ul>
+        <div class="navbar-right">
+            @if (SignInManager.IsSignedIn(User))
+            {
+                var userName = User.Identity?.Name ?? "مستخدم";
+                var firstLetter = userName.Length > 0 ? userName[0].ToString().ToUpper() : "?";
+                <div class="user-avatar">
+                    @firstLetter
+                    <span class="tooltip">@userName</span>
+                </div>
+            }
+            else
+            {
+                <button class="login-btn-nav" id="openModalBtn">
+                    <i class="fas fa-sign-in-alt" style="margin-left: 6px;"></i> تسجيل الدخول
+                </button>
+            }
+        </div>
+    </nav>
+
+    <div class="container">
+        <partial name="_Tabs" />
+
+        <div class="page-header">
+            <div class="page-info">
+                <a href="/" class="back-button"><i class="fas fa-arrow-right"></i></a>
+                <div class="page-title">
+                    <h1>عقاراتي</h1>
+                    <p>جميع عقاراتك التي نشرتها</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <div class="icon-circle"><i class="fa-solid fa-building"></i></div>
+                عقاراتي
+            </div>
+
+            @if (TempData["Success"] != null)
+            {
+                <div class="success-msg">
+                    <i class="fa-solid fa-check-circle"></i> @TempData["Success"]
+                </div>
+            }
+            @if (TempData["Error"] != null)
+            {
+                <div class="success-msg" style="background:rgba(220,53,69,0.15); border-color:#dc3545; color:#dc3545;">
+                    <i class="fa-solid fa-exclamation-circle"></i> @TempData["Error"]
+                </div>
+            }
+
+            @if (Model != null && Model.Any())
+            {
+                <div class="table-wrap">
+                    <table class="needs-table">
+                        <thead>
+                            <tr>
+                                <th>الصورة</th>
+                                <th>المحافظة</th>
+                                <th>الحي</th>
+                                <th>تاريخ النشر</th>
+                                <th>نوع العقار</th>
+                                <th>السعر</th>
+                                <th>الحالة</th>
+                                
+                                <th>التفاصيل</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var property in Model)
+                            {
+                                // ================================================
+                                // 🖼️ الصورة: إذا وجدت استخدمها، وإلا اختر صورة عشوائية حسب النوع
+                                // ================================================
+                                string mainImage = "/image/default.jpg";
+                                if (property.Images != null && property.Images.Any())
+                                {
+                                    var mainImg = property.Images.FirstOrDefault(i => i.IsMain);
+                                    if (mainImg != null && !string.IsNullOrEmpty(mainImg.ImageUrl))
+                                    {
+                                        mainImage = mainImg.ImageUrl;
+                                    }
+                                }
+
+                                // ✅ إذا لم توجد صورة، استخدم صورة عشوائية حسب نوع العقار
+                                if (mainImage == "/image/default.jpg" && property.PropertyType?.NameAr != null)
+                                {
+                                    var typeName = property.PropertyType.NameAr;
+                                    var imageList = new List<string> { "default.jpg" };
+
+                                    if (typeName.Contains("فيلا"))
+                                        imageList = new List<string> { "villa_1.jpg", "villa_2.jpg", "villa_3.jpg", "villa_4.jpg", "villa_5.jpg" };
+                                    else if (typeName.Contains("شقة"))
+                                        imageList = new List<string> { "apartment_1.jpg", "apartment_2.jpg", "apartment_3.jpg", "apartment_4.jpg", "apartment_5.jpg" };
+                                    else if (typeName.Contains("مكتب"))
+                                        imageList = new List<string> { "office_1.jpg", "office_2.jpg", "office_3.jpg", "office_4.jpg", "office_5.jpg" };
+                                    else if (typeName.Contains("أرض زراعية"))
+                                        imageList = new List<string> { "farmland_1.jpg", "farmland_2.jpg", "farmland_3.jpg", "farmland_4.jpg", "farmland_5.jpg" };
+
+                                    var random = new Random();
+                                    var selectedImage = imageList[random.Next(imageList.Count)];
+                                    mainImage = "/image/" + selectedImage;
+                                }
+
+                                string statusClass = "";
+                                string statusText = "";
+
+                                if (property.IsSold)
+                                {
+                                    statusClass = "status-sold";
+                                    statusText = " مباع";
+                                }
+                                else if (property.IsActive)
+                                {
+                                    statusClass = "status-published";
+                                    statusText = "✓ منشور";
+                                }
+                                else
+                                {
+                                    statusClass = "status-pending";
+                                    statusText = " قيد المراجعة";
+                                }
+
+                                <tr>
+                                    <td><img src="@mainImage" class="prop-thumb" onerror="this.src='/image/default.jpg'" /></td>
+                                    <td>@(property.City?.NameAr ?? "-")</td>
+                                    <td>@(property.Neighborhood ?? "-")</td>
+                                    <td>@property.CreatedAt.ToString("yyyy/MM/dd")</td>
+                                    <td>@(property.PropertyType?.NameAr ?? "-")</td>
+                                    <td style="text-align: left; direction: ltr;">
+                                        <span style="color: #d4af37; font-weight: 700;">$ </span>
+                                        <span style="font-weight: 700;">@property.Price.ToString("N0")</span>
+                                    </td>
+                                    <td><span class="@statusClass">@statusText</span></td>
+
+                                    <td>
+                                        <button class="btn-more" onclick="viewProperty('@property.Code')">تفاصيل</button>
+                                    </td>
+                                    <td style="text-align:center; vertical-align:middle; padding:14px 8px;">
+                                        <div style="display:flex; justify-content:center; align-items:center; gap:8px; flex-wrap:nowrap;">
+                                            <!-- ✅ زر تحديد كمباع (باستخدام Form) -->
+                                            <form method="post" action="@Url.Action("MarkAsSold", "Properties")" style="display:inline; margin:0;">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="id" value="@property.Id" />
+                                                <button type="submit" class="btn-icon-sm btn-sold @(property.IsSold ? "sold-active" : "")"
+                                                        onclick="return confirm('@(property.IsSold ? "هل أنت متأكد من إلغاء تحديد المباع؟" : "هل أنت متأكد من تحديد هذا العقار كمباع؟")')"
+                                                        title="@(property.IsSold ? "إلغاء المباع" : "تحديد كمباع")">
+                                                    <i class="fa-solid fa-check"></i>
+                                                </button>
+                                            </form>
+                                            <a href="@Url.Action("Edit", "Properties", new { id = property.Id })" class="btn-icon-sm btn-edit" title="تعديل">
+                                                <i class="fa-solid fa-pen"></i>
+                                            </a>
+                                            <button class="btn-icon-sm btn-delete" onclick="deleteProperty(@property.Id)" title="حذف">
+                                                <i class="fa-solid fa-trash"></i>
+                                            </button>
+
+                                            <!-- 🔍 زر البحث عن طلب زبون مطابق -->
+                                            <a href="@Url.Action("FindMatchingRequest", "Properties", new { id = property.Id })"
+                                               class="btn-icon-sm"
+                                               style="background:#FFFF00; color: #192e43; border: 2px solid #FDCB00; border-radius: 7px; width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center; text-decoration: none; transition: 0.3s;"
+                                               title="  طلب زبون يشبه هذا العقار"
+                                               onmouseover="this.style.transform='scale(1.1)'"
+                                               onmouseout="this.style.transform='scale(1)'">
+                                                <i class="fa-solid fa-handshake"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- ✅ Pagination -->
+                @if (ViewBag.TotalCount != null && ViewBag.TotalCount > 0)
+                {
+                    var totalPages = (int)Math.Ceiling((double)ViewBag.TotalCount / ViewBag.PageSize);
+                    var currentPage = ViewBag.CurrentPage;
+
+                    <div class="pagination-container">
+                        @if (currentPage > 1)
+                        {
+                            <a href="@Url.Action("MyProperties", new { page = currentPage - 1 })" class="page-btn arrow">
+                                <i class="fa-solid fa-chevron-right"></i> السابق
+                            </a>
+                        }
+
+                        @for (int i = 1; i <= totalPages && i <= 10; i++)
+                        {
+                            if (i == currentPage)
+                            {
+                                <span class="page-btn active">@i</span>
+                            }
+                            else
+                            {
+                                <a href="@Url.Action("MyProperties", new { page = i })" class="page-btn inactive">@i</a>
+                            }
+                        }
+
+                        @if (currentPage < totalPages)
+                        {
+                            <a href="@Url.Action("MyProperties", new { page = currentPage + 1 })" class="page-btn arrow">
+                                التالي <i class="fa-solid fa-chevron-left"></i>
+                            </a>
+                        }
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="empty-state">
+                    <span class="empty-icon"><i class="fa-regular fa-building"></i></span>
+                    <h3>لا توجد عقارات بعد</h3>
+                    <p>قم بإضافة عقارك الأول الآن</p>
+                    <a href="/Properties/Create" class="btn-primary">
+                        <i class="fa-solid fa-plus"></i> إضافة عقار
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+
+    <form id="deleteForm" style="display:none;">
+        @Html.AntiForgeryToken()
+    </form>
+
+    <div id="deleteModal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-icon danger">
+                <i class="fa-solid fa-trash-can"></i>
+            </div>
+            <h3>تأكيد الحذف</h3>
+            <div class="divider"></div>
+            <p>هل أنت متأكد من حذف هذا العقار؟<br />لا يمكن التراجع عن هذا الإجراء.</p>
+            <div class="modal-buttons">
+                <button class="btn-modal btn-cancel" onclick="closeDeleteModal()">
+                    <i class="fa-solid fa-times"></i> إلغاء
+                </button>
+                <button class="btn-modal btn-confirm-delete" onclick="confirmDelete()">
+                    <i class="fa-solid fa-trash"></i> تأكيد الحذف
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="soldSuccessModal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-icon success">
+                <i class="fa-solid fa-check-circle"></i>
+            </div>
+            <h3 id="soldSuccessTitle">تم التحديث بنجاح</h3>
+            <div class="divider"></div>
+            <p id="soldSuccessText">تم تحديد العقار كمباع بنجاح</p>
+            <div class="modal-buttons">
+                <button class="btn-modal btn-confirm-success" onclick="closeSoldSuccessModal()">
+                    <i class="fa-solid fa-check"></i> حسناً
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var deleteId = 0;
+
+        function deleteProperty(id) {
+            deleteId = id;
+            document.getElementById('deleteModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeDeleteModal() {
+            document.getElementById('deleteModal').classList.remove('active');
+            document.body.style.overflow = '';
+            deleteId = 0;
+        }
+
+        function confirmDelete() {
+            if (deleteId === 0) return;
+
+            var token = document.querySelector('#deleteForm input[name="__RequestVerificationToken"]')?.value;
+
+            fetch('/Properties/Delete/' + deleteId, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': token || ''
+                },
+                body: JSON.stringify({ id: deleteId })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    closeDeleteModal();
+
+                    if (data.success) {
+                        showNotification('✅ تم حذف العقار بنجاح', 'success');
+                        setTimeout(() => location.reload(), 1500);
+                    } else {
+                        showNotification('❌ ' + (data.message || 'حدث خطأ أثناء الحذف'), 'error');
+                    }
+                })
+                .catch(error => {
+                    closeDeleteModal();
+                    showNotification('❌ حدث خطأ أثناء الحذف', 'error');
+                    console.error(error);
+                });
+        }
+
+        function showNotification(message, type) {
+            var old = document.querySelector('.custom-notification');
+            if (old) old.remove();
+
+            var notif = document.createElement('div');
+            notif.className = 'custom-notification ' + type;
+            notif.textContent = message;
+            document.body.appendChild(notif);
+
+            setTimeout(() => {
+                notif.style.opacity = '0';
+                setTimeout(() => notif.remove(), 500);
+            }, 3000);
+        }
+
+        // ✅ دالة التفاصيل: تستقبل Code بدلاً من Id
+        function viewProperty(code) {
+            if (code) {
+                window.location.href = '/Properties/DetailSearch?code=' + code;
+            } else {
+                showNotification('⚠️ لم يتم العثور على العقار', 'error');
+            }
+        }
+
+        function closeSoldSuccessModal() {
+            document.getElementById('soldSuccessModal').classList.remove('active');
+            document.body.style.overflow = '';
+            location.reload();
+        }
+    </script>
+
+</body>
+</html>

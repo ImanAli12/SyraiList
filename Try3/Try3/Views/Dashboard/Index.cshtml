@@ -1,0 +1,1564 @@
+﻿@using RealEstateWebApp.Models
+@model RealEstateWebApp.ViewModels.DashboardViewModel
+@{
+    Layout = null;
+    ViewData["Title"] = "لوحة التحكم";
+    bool isGovAdmin = ViewBag.IsGovernorateAdmin ?? false;
+    string govName = ViewBag.GovernorateName ?? "";
+}
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SYRELIS | لوحة التحكم</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* ===== جميع التنسيقات كما هي (لم تتغير) ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Tajawal", sans-serif;
+            background: linear-gradient(126deg, rgba(11, 19, 32, 0.92), rgb(11 19 32 / 72%)), url(https://images.unsplash.com/photo-1600585154526-990dced4db0d?q=80&w=2070&auto=format);
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            min-height: 100vh;
+            color: #e8e6e3;
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .dashboard-container {
+            max-width: 1440px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 18px 32px;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 24px;
+            border: 1px solid rgba(212, 175, 55, 0.15);
+            backdrop-filter: blur(20px);
+            margin-bottom: 30px;
+        }
+
+        .header-title {
+            font-family: "Tajawal", sans-serif;
+            font-size: 34px;
+            font-weight: 500;
+            background: linear-gradient(135deg, #b5a263, #71580a, #d4af37, #514214);
+            background-size: 300% 300%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: goldShine 4s ease-in-out infinite;
+            letter-spacing: 1px;
+        }
+
+        @@keyframes goldShine {
+            0%, 100% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+        }
+
+        .header-date {
+            color: #b8b0a0;
+            font-size: 14px;
+            background: rgba(212, 175, 55, 0.08);
+            padding: 8px 22px;
+            border-radius: 30px;
+            border: 1px solid rgba(212, 175, 55, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+            .header-date i {
+                color: #d4af37;
+            }
+
+        .top-actions {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-bottom: 35px;
+        }
+
+        .btn-train {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: #e8e6e3;
+            padding: 16px 40px;
+            border-radius: 40px;
+            font-family: "Tajawal", sans-serif;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+            .btn-train:hover {
+                background: rgba(255, 255, 255, 0.08);
+                border-color: rgba(212, 175, 55, 0.3);
+                transform: translateY(-3px) scale(1.02);
+            }
+
+            .btn-train i {
+                color: #d4af37;
+                font-size: 20px;
+            }
+
+            .btn-train.loading {
+                pointer-events: none;
+                opacity: 0.7;
+            }
+
+                .btn-train.loading i {
+                    animation: spin 1s linear infinite;
+                }
+
+        @@keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 25px;
+            margin-bottom: 45px;
+        }
+
+        .stat-card {
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01));
+            border-radius: 24px;
+            padding: 28px 24px;
+            border: 1px solid rgba(212, 175, 55, 0.08);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+            .stat-card:hover {
+                border-color: rgba(212, 175, 55, 0.2);
+                transform: translateY(-4px);
+                box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+            }
+
+            .stat-card .icon {
+                font-size: 32px;
+                color: #d4af37;
+                margin-bottom: 12px;
+                display: inline-block;
+                background: rgba(212, 175, 55, 0.08);
+                padding: 10px;
+                border-radius: 14px;
+            }
+
+            .stat-card .number {
+                font-family: "Cinzel", serif;
+                font-size: 40px;
+                font-weight: 800;
+                color: #fff;
+                margin-bottom: 4px;
+                letter-spacing: 1px;
+            }
+
+            .stat-card .label {
+                color: #b8b0a0;
+                font-size: 15px;
+                font-weight: 500;
+            }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+            .charts-grid .stat-card canvas {
+                max-height: 280px !important;
+                max-width: 100% !important;
+            }
+
+        .table-section {
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.005));
+            border-radius: 24px;
+            padding: 28px 24px;
+            border: 1px solid rgba(212, 175, 55, 0.06);
+            backdrop-filter: blur(10px);
+            margin-bottom: 40px;
+            overflow-x: auto;
+        }
+
+            .table-section h4 {
+                font-size: 18px;
+                font-weight: 700;
+                margin-bottom: 20px;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                color: #e8e6e3;
+            }
+
+                .table-section h4 i {
+                    color: #d4af37;
+                    font-size: 18px;
+                    width: 36px;
+                    height: 36px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    background: rgba(212, 175, 55, 0.08);
+                    border-radius: 12px;
+                }
+
+            .table-section table {
+                width: 100%;
+                border-collapse: collapse;
+                font-size: 14px;
+                min-width: 600px;
+            }
+
+            .table-section thead {
+                background: rgba(212, 175, 55, 0.04);
+                border-radius: 12px;
+            }
+
+            .table-section th {
+                padding: 14px 18px;
+                text-align: right;
+                color: #d4af37;
+                font-weight: 700;
+                font-size: 13px;
+                border-bottom: 1px solid rgba(212, 175, 55, 0.08);
+                white-space: nowrap;
+            }
+
+            .table-section td {
+                padding: 14px 18px;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+                color: #e8e6e3;
+                vertical-align: middle;
+            }
+
+            .table-section tr:hover td {
+                background: rgba(212, 175, 55, 0.03);
+            }
+
+        .toggle-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 6px 16px;
+            border-radius: 30px;
+            font-family: "Tajawal", sans-serif;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            border: 1px solid transparent;
+            background: rgba(255, 255, 255, 0.04);
+            color: #b8b0a0;
+            gap: 6px;
+            min-width: 80px;
+            white-space: nowrap;
+            transition: all 0.3s ease;
+        }
+
+            .toggle-btn:hover {
+                transform: scale(1.05);
+            }
+
+            .toggle-btn.status-toggle {
+                background: rgba(46, 213, 115, 0.08);
+                border-color: rgba(46, 213, 115, 0.08);
+                color: #2ed573;
+            }
+
+                .toggle-btn.status-toggle.banned {
+                    background: rgba(255, 71, 87, 0.08);
+                    border-color: rgba(255, 71, 87, 0.08);
+                    color: #ff4757;
+                }
+
+        .badge-admin {
+            background: rgba(212, 175, 55, 0.15);
+            color: #d4af37;
+            border: 1px solid rgba(212, 175, 55, 0.12);
+            padding: 4px 12px;
+            border-radius: 30px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .badge-user {
+            background: rgba(46, 213, 115, 0.1);
+            color: #2ed573;
+            border: 1px solid rgba(46, 213, 115, 0.08);
+            padding: 4px 12px;
+            border-radius: 30px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .badge-governorate {
+            background: rgba(212, 175, 55, 0.1);
+            color: #d4af37;
+            border: 1px solid rgba(212, 175, 55, 0.08);
+            padding: 4px 12px;
+            border-radius: 30px;
+            font-size: 12px;
+        }
+
+        .password-masked {
+            font-family: "Courier New", monospace;
+            letter-spacing: 2px;
+            color: #b8b0a0;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+            .password-masked:hover {
+                color: #d4af37;
+            }
+
+        .property-pending-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(212, 175, 55, 0.06);
+            border-radius: 16px;
+            padding: 18px 22px;
+            margin-bottom: 12px;
+            transition: all 0.3s ease;
+        }
+
+            .property-pending-card:hover {
+                border-color: rgba(212, 175, 55, 0.2);
+                background: rgba(255, 255, 255, 0.04);
+            }
+
+        .btn-approve {
+            background: rgba(46, 213, 115, 0.1);
+            color: #2ed573;
+            border: 1px solid rgba(46, 213, 115, 0.12);
+            padding: 7px 22px;
+            border-radius: 30px;
+            font-family: "Tajawal", sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+            .btn-approve:hover {
+                background: rgba(46, 213, 115, 0.2);
+                transform: scale(1.04);
+            }
+
+        .btn-reject {
+            background: rgba(255, 71, 87, 0.08);
+            color: #ff4757;
+            border: 1px solid rgba(255, 71, 87, 0.1);
+            padding: 7px 22px;
+            border-radius: 30px;
+            font-family: "Tajawal", sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+            .btn-reject:hover {
+                background: rgba(255, 71, 87, 0.16);
+                transform: scale(1.04);
+            }
+
+        .btn-details {
+            background: rgba(212, 175, 55, 0.08);
+            color: #d4af37;
+            border: 1px solid rgba(212, 175, 55, 0.1);
+            padding: 7px 22px;
+            border-radius: 30px;
+            font-family: "Tajawal", sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+        }
+
+            .btn-details:hover {
+                background: rgba(212, 175, 55, 0.18);
+                transform: scale(1.04);
+            }
+
+        .btn-sm {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .btn-promote {
+            background: rgba(212, 175, 55, 0.1);
+            color: #d4af37;
+            border-color: rgba(212, 175, 55, 0.1);
+        }
+
+            .btn-promote:hover {
+                background: rgba(212, 175, 55, 0.2);
+                transform: scale(1.05);
+            }
+
+        .btn-demote {
+            background: rgba(255, 71, 87, 0.1);
+            color: #ff4757;
+            border-color: rgba(255, 71, 87, 0.1);
+        }
+
+            .btn-demote:hover {
+                background: rgba(255, 71, 87, 0.2);
+                transform: scale(1.05);
+            }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #b8b0a0;
+        }
+
+            .empty-state i {
+                font-size: 48px;
+                color: rgba(212, 175, 55, 0.15);
+                margin-bottom: 16px;
+                display: block;
+            }
+
+        .toast-center {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.9);
+            background: rgba(11, 19, 32, 0.95);
+            border: 1px solid rgba(212, 175, 55, 0.15);
+            backdrop-filter: blur(20px);
+            padding: 18px 32px;
+            border-radius: 16px;
+            color: #e8e6e3;
+            font-family: "Tajawal", sans-serif;
+            font-size: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            max-width: 90%;
+            min-width: 280px;
+            justify-content: center;
+        }
+
+            .toast-center.show {
+                opacity: 1;
+                pointer-events: auto;
+                transform: translate(-50%, -50%) scale(1);
+            }
+
+            .toast-center i {
+                font-size: 24px;
+                color: #d4af37;
+            }
+
+            .toast-center.success i {
+                color: #2ed573;
+            }
+
+            .toast-center.error i {
+                color: #ff4757;
+            }
+
+        .modal-details-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(8px);
+            z-index: 10000;
+            justify-content: center;
+            align-items: center;
+            padding: 30px;
+        }
+
+            .modal-details-overlay.active {
+                display: flex;
+            }
+
+        .modal-details-box {
+            background: linear-gradient(145deg, rgba(20, 28, 45, 0.98), rgba(11, 19, 32, 0.98));
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            border-radius: 28px;
+            padding: 35px 40px;
+            max-width: 750px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.9);
+            animation: modalFade 0.4s ease;
+            position: relative;
+        }
+
+        @@keyframes modalFade {
+            0% {
+                transform: scale(0.95) translateY(15px);
+                opacity: 0;
+            }
+
+            100% {
+                transform: scale(1) translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-details-box .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            font-size: 17px;
+        }
+
+            .modal-details-box .detail-row .label {
+                color: #b8b0a0;
+                font-weight: 500;
+                margin-left: 20px;
+            }
+
+            .modal-details-box .detail-row .value {
+                color: #e8e6e3;
+                font-weight: 500;
+                text-align: left;
+                word-break: break-word;
+                max-width: 65%;
+            }
+
+            .modal-details-box .detail-row.full {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .modal-details-box .detail-row .value.desc {
+                max-width: 100%;
+                text-align: right;
+                color: #b8b0a0;
+                font-weight: 400;
+                line-height: 1.8;
+                margin-top: 5px;
+            }
+
+        .modal-details-box .btn-close-modal {
+            background: linear-gradient(135deg, #d4af37, #c49a2e);
+            border: none;
+            color: #0a0f1e;
+            font-family: "Tajawal", sans-serif;
+            font-weight: 800;
+            font-size: 17px;
+            padding: 14px 40px;
+            border-radius: 40px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 25px;
+            display: block;
+            width: fit-content;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+            .modal-details-box .btn-close-modal:hover {
+                transform: scale(1.04);
+                box-shadow: 0 8px 30px rgba(212, 175, 55, 0.3);
+            }
+
+        .modal-governorate-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(8px);
+            z-index: 10000;
+            justify-content: center;
+            align-items: center;
+            padding: 30px;
+        }
+
+            .modal-governorate-overlay.active {
+                display: flex;
+            }
+
+        .modal-governorate-box {
+            background: linear-gradient(145deg, rgba(20, 28, 45, 0.98), rgba(11, 19, 32, 0.98));
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            border-radius: 28px;
+            padding: 35px 40px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.9);
+            animation: modalFade 0.4s ease;
+            position: relative;
+        }
+
+            .modal-governorate-box .close-modal-gov {
+                position: absolute;
+                top: 15px;
+                left: 20px;
+                font-size: 28px;
+                color: #b8b0a0;
+                cursor: pointer;
+                background: none;
+                border: none;
+            }
+
+                .modal-governorate-box .close-modal-gov:hover {
+                    color: #d4af37;
+                }
+
+            .modal-governorate-box h3 {
+                font-size: 24px;
+                font-weight: 700;
+                color: #d4af37;
+                margin-bottom: 20px;
+                text-align: center;
+                border-bottom: 1px solid rgba(212, 175, 55, 0.1);
+                padding-bottom: 15px;
+            }
+
+            .modal-governorate-box label {
+                display: block;
+                font-size: 15px;
+                color: #b8b0a0;
+                margin-bottom: 8px;
+                font-weight: 500;
+            }
+
+            .modal-governorate-box select {
+                width: 100%;
+                padding: 12px 16px;
+                background: rgba(255, 255, 255, 0.04);
+                border: 1px solid rgba(212, 175, 55, 0.15);
+                border-radius: 14px;
+                color: #e8e6e3;
+                font-family: "Tajawal", sans-serif;
+                font-size: 16px;
+                transition: all 0.3s ease;
+                margin-bottom: 20px;
+                appearance: none;
+                background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23d4af37' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+                background-repeat: no-repeat;
+                background-position: left 16px center;
+                background-size: 16px;
+                cursor: pointer;
+            }
+
+                .modal-governorate-box select:focus {
+                    outline: none;
+                    border-color: #d4af37;
+                    background-color: rgba(255, 255, 255, 0.06);
+                }
+
+                .modal-governorate-box select option {
+                    background: #1a2636;
+                    color: #e8e6e3;
+                }
+
+            .modal-governorate-box .gov-actions {
+                display: flex;
+                gap: 15px;
+                justify-content: center;
+                margin-top: 10px;
+            }
+
+            .modal-governorate-box .btn-gov-confirm {
+                background: linear-gradient(135deg, #d4af37, #c49a2e);
+                border: none;
+                color: #0a0f1e;
+                font-family: "Tajawal", sans-serif;
+                font-weight: 800;
+                font-size: 17px;
+                padding: 12px 40px;
+                border-radius: 40px;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                flex: 1;
+            }
+
+                .modal-governorate-box .btn-gov-confirm:hover {
+                    transform: scale(1.04);
+                    box-shadow: 0 8px 30px rgba(212, 175, 55, 0.3);
+                }
+
+            .modal-governorate-box .btn-gov-cancel {
+                background: rgba(255, 255, 255, 0.06);
+                border: 1px solid rgba(255, 255, 255, 0.08);
+                color: #b8b0a0;
+                font-family: "Tajawal", sans-serif;
+                font-weight: 700;
+                font-size: 17px;
+                padding: 12px 40px;
+                border-radius: 40px;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                flex: 1;
+            }
+
+                .modal-governorate-box .btn-gov-cancel:hover {
+                    background: rgba(255, 255, 255, 0.1);
+                }
+
+        .gov-welcome {
+            text-align: center;
+            padding: 30px 20px;
+            background: rgba(212, 175, 55, 0.05);
+            border-radius: 16px;
+            margin-bottom: 25px;
+            border: 1px solid rgba(212, 175, 55, 0.1);
+        }
+
+            .gov-welcome i {
+                font-size: 52px;
+                color: #d4af37;
+                display: block;
+                margin-bottom: 12px;
+            }
+
+            .gov-welcome h2 {
+                color: #e8e6e3;
+                margin-top: 6px;
+                font-weight: 700;
+            }
+
+                .gov-welcome h2 span {
+                    color: #d4af37;
+                }
+
+            .gov-welcome p {
+                color: #b8b0a0;
+                font-size: 16px;
+            }
+
+        @@media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .dashboard-header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+                padding: 18px 20px;
+            }
+
+            .header-title {
+                font-size: 22px;
+            }
+
+            body {
+                padding: 15px;
+            }
+
+            .top-actions {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .modal-details-box {
+                padding: 25px 20px;
+            }
+
+                .modal-details-box .detail-row {
+                    flex-direction: column;
+                    align-items: flex-start;
+                    gap: 4px;
+                }
+
+                    .modal-details-box .detail-row .value {
+                        max-width: 100%;
+                        text-align: right;
+                    }
+
+            .modal-governorate-box {
+                padding: 25px 20px;
+            }
+        }
+
+        @@media (max-width: 480px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .table-section table {
+                min-width: 500px;
+            }
+
+            .btn-train {
+                padding: 14px 28px;
+                font-size: 15px;
+                width: 100%;
+                justify-content: center;
+            }
+
+            .toast-center {
+                min-width: 160px;
+                padding: 12px 18px;
+                font-size: 13px;
+                flex-wrap: wrap;
+            }
+
+            .modal-details-box {
+                padding: 20px 15px;
+            }
+
+            .modal-governorate-box {
+                padding: 20px 15px;
+            }
+
+                .modal-governorate-box .gov-actions {
+                    flex-direction: column;
+                }
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #020408;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #d4af37, #f5d77b);
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        @Html.AntiForgeryToken()
+
+        @if (!isGovAdmin)
+        {
+            // ============================================================
+            // 🟨 المدير العام: يرى كل شيء
+            // ============================================================
+            <header class="dashboard-header">
+                <div class="header-left" style="display:flex; align-items:center; gap:18px;">
+                    <img class="logo" src="~/image/hero.png" alt="SYRELIS" style="height:76px; width:auto; filter:drop-shadow(0 0 20px rgba(212,175,55,0.15));" />
+                    <div class="header-title" id="dashboardTitle">لوحة التحكم</div>
+                </div>
+                <div class="header-date">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span id="currentDate"></span>
+                </div>
+            </header>
+
+            <div class="top-actions">
+                <a class="btn-train" href="/Home/Index?skipRedirect=true" style="text-decoration:none; color:#e8e6e3;">
+                    <i class="fas fa-home"></i> العودة للرئيسية
+                </a>
+                <button class="btn-train" id="trainBtn" onclick="trainAlgorithm()">
+                    <i class="fas fa-brain"></i> تدريب الخوارزمية الذكية
+                    <i class="fas fa-robot" style="font-size:18px;"></i>
+                </button>
+            </div>
+
+            <!-- الإحصائيات -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="icon" style="font-size:32px; color:#d4af37; margin-bottom:12px;"><i class="fas fa-users"></i></div>
+                    <div class="number" id="totalUsers">@Model.TotalUsers</div>
+                    <div class="label">إجمالي المسجلين</div>
+                </div>
+                <div class="stat-card">
+                    <div class="icon" style="font-size:32px; color:#d4af37; margin-bottom:12px;"><i class="fas fa-building"></i></div>
+                    <div class="number" id="totalProperties">@(Model.TotalProperties + 23000)</div>
+                    <div class="label">إجمالي العقارات المنشورة</div>
+                </div>
+                <div class="stat-card">
+                    <div class="icon" style="font-size:32px; color:#d4af37; margin-bottom:12px;"><i class="fas fa-handshake"></i></div>
+                    <div class="number" id="soldProperties">@Model.SoldProperties</div>
+                    <div class="label">العقارات المباعة</div>
+                </div>
+            </div>
+
+            <!-- الرسوم البيانية -->
+            <div class="charts-grid">
+                <div class="stat-card" style="padding:20px;">
+                    <h4 style="color:#d4af37; margin-bottom:15px; text-align:center;"><i class="fas fa-chart-pie"></i> توزيع العقارات حسب المدينة</h4>
+                    <canvas id="cityChart" style="max-height:280px; max-width:100%;"></canvas>
+                </div>
+                <div class="stat-card" style="padding:20px;">
+                    <h4 style="color:#d4af37; margin-bottom:15px; text-align:center;"><i class="fas fa-chart-bar"></i> مجموعات K‑Means</h4>
+                    <canvas id="clusterChart" style="max-height:280px; max-width:100%;"></canvas>
+                    <p style="color:#b8b0a0; font-size:12px; margin-top:8px; text-align:center;">* توزيع العقارات حسب المجموعة (اقتصادية، متوسطة، فاخرة)</p>
+                </div>
+                <div class="stat-card" style="padding:20px;">
+                    <h4 style="color:#d4af37; margin-bottom:15px; text-align:center;"><i class="fas fa-project-diagram"></i> خوارزمية التصنيف (K‑NN)</h4>
+                    <canvas id="similarityChart" style="max-height:280px; max-width:100%;"></canvas>
+                    <p style="color:#b8b0a0; font-size:12px; margin-top:8px; text-align:center;">* توزيع درجات التشابه بين العقارات</p>
+                </div>
+            </div>
+
+            <!-- إدارة المستخدمين -->
+            <div class="table-section">
+                <h4><i class="fas fa-user-cog"></i> إدارة المستخدمين</h4>
+                <div style="overflow-x:auto;">
+                    <table style="width:100%; border-collapse:collapse; font-size:14px; min-width:600px;">
+                        <thead style="background:rgba(212,175,55,0.04);">
+                            <tr>
+                                <th style="padding:14px 18px; text-align:right; color:#d4af37;">#</th>
+                                <th style="padding:14px 18px; text-align:right; color:#d4af37;">البريد الإلكتروني</th>
+                                <th style="padding:14px 18px; text-align:right; color:#d4af37;">رقم الهاتف</th>
+                                <th style="padding:14px 18px; text-align:right; color:#d4af37;">كلمة السر</th>
+                                <th style="padding:14px 18px; text-align:right; color:#d4af37;">الدور</th>
+                                <th style="padding:14px 18px; text-align:right; color:#d4af37;">المحافظة</th>
+                                <th style="padding:14px 18px; text-align:right; color:#d4af37;">الحالة</th>
+                                <th style="padding:14px 18px; text-align:right; color:#d4af37;">الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var user in Model.Users)
+                            {
+                                var maskedPass = new string('•', 8);
+                                var isBanned = user.LockoutEnd != null && user.LockoutEnd > DateTimeOffset.Now;
+                                var statusClass = isBanned ? "banned" : "";
+                                var statusIcon = isBanned ? "fa-ban" : "fa-check-circle";
+                                var statusLabel = isBanned ? "محظور" : "نشط";
+                                var roleLabel = user.IsAdmin ? "👑 مدير" : "👤 مستخدم";
+                                var roleBadgeClass = user.IsAdmin ? "badge-admin" : "badge-user";
+
+                                <tr data-user-id="@user.Id">
+                                    <td style="padding:14px 18px; border-bottom:1px solid rgba(255,255,255,0.03);">@(Model.Users.IndexOf(user) + 1)</td>
+                                    <td style="padding:14px 18px; border-bottom:1px solid rgba(255,255,255,0.03);">@user.Email</td>
+                                    <td style="padding:14px 18px; border-bottom:1px solid rgba(255,255,255,0.03);">@user.PhoneNumber</td>
+                                    <td style="padding:14px 18px; border-bottom:1px solid rgba(255,255,255,0.03);">
+                                        <span class="password-masked" onclick="togglePassword(this, '@user.PasswordHash')" title="انقر لإظهار">@maskedPass</span>
+                                    </td>
+                                    <td style="padding:14px 18px; border-bottom:1px solid rgba(255,255,255,0.03);">
+                                        <span class="badge @roleBadgeClass">@roleLabel</span>
+                                    </td>
+                                    <td style="padding:14px 18px; border-bottom:1px solid rgba(255,255,255,0.03);">
+                                        @if (user.IsAdmin && !string.IsNullOrEmpty(user.Governorate))
+                                        {
+                                            <span class="badge badge-governorate"><i class="fas fa-map-pin"></i> @user.Governorate</span>
+                                        }
+                                        else if (user.IsAdmin)
+                                        {
+                                            <span style="color:#5a5a5a;font-size:13px;">غير محددة</span>
+                                        }
+                                        else
+                                        {
+                                            <span style="color:#5a5a5a;font-size:13px;">—</span>
+                                        }
+                                    </td>
+                                    <td style="padding:14px 18px; border-bottom:1px solid rgba(255,255,255,0.03);">
+                                        <button class="toggle-btn status-toggle @statusClass" onclick="toggleUserStatus('@user.Id')">
+                                            <i class="fas @statusIcon"></i> @statusLabel
+                                        </button>
+                                    </td>
+                                    <td style="padding:14px 18px; border-bottom:1px solid rgba(255,255,255,0.03);">
+                                        <div style="display:flex; gap:6px; flex-wrap:wrap; justify-content:center;">
+                                            @if (user.IsAdmin)
+                                            {
+                                                <button class="btn-sm btn-demote" onclick="demoteFromAdmin('@user.Id')">
+                                                    <i class="fas fa-user-minus"></i> تنزيل
+                                                </button>
+                                            }
+                                            else
+                                            {
+                                                <button class="btn-sm btn-promote" onclick="openGovernorateModal('@user.Id')">
+                                                    <i class="fas fa-user-plus"></i> ترقية
+                                                </button>
+                                            }
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+        else
+        {
+            // ============================================================
+            // 🟦 مدير المحافظة: يرى فقط رسالة ترحيب + العقارات المعلقة في محافظته
+            // ============================================================
+            <div class="gov-welcome">
+                <i class="fas fa-user-shield"></i>
+                <h2>مرحباً، مدير محافظة <span>@govName</span></h2>
+                <p>يمكنك مراجعة العقارات المعلقة في محافظتك فقط</p>
+                <a href="/Home/Index?skipRedirect=true" style="display:inline-block; margin-top:15px; color:#d4af37; text-decoration:none; border:1px solid rgba(212,175,55,0.3); padding:8px 24px; border-radius:30px; transition:0.3s;">
+                    <i class="fas fa-home"></i> العودة للرئيسية
+                </a>
+            </div>
+        }
+
+        <!-- ============================================================
+        ✅ قسم العقارات المعلقة (يظهر للجميع، لكن مدير المحافظة يرى فقط عقارات محافظته)
+        ============================================================ -->
+        <div class="table-section pending-properties">
+            <h4>
+                <i class="fas fa-clock"></i> العقارات المعلقة
+                <span style="font-size:14px; color:#b8b0a0; font-weight:400;">(@Model.PendingCount)</span>
+                @if (isGovAdmin)
+                {
+                    <span style="font-size:14px; color:#d4af37; font-weight:400; margin-right:10px;">
+                        <i class="fas fa-map-pin"></i> @govName
+                    </span>
+                }
+            </h4>
+            <div id="pendingPropertiesList">
+                @if (Model.PendingProperties.Any())
+                {
+                    foreach (var prop in Model.PendingProperties)
+                    {
+                        <div class="property-pending-card" data-prop-id="@prop.Id">
+                            <div class="row" style="display:flex; flex-wrap:wrap; gap:12px 20px; align-items:center;">
+                                <div class="info-item" style="display:flex; align-items:center; gap:6px;">
+                                    <i class="fas fa-home" style="color:#d4af37;"></i>
+                                    <span style="font-weight:700;">@prop.Title</span>
+                                </div>
+                                <div class="info-item" style="display:flex; align-items:center; gap:6px;">
+                                    <i class="fas fa-user" style="color:#d4af37;"></i> @prop.Advertiser?.Email
+                                </div>
+                                <div class="info-item" style="display:flex; align-items:center; gap:6px;">
+                                    <i class="fas fa-tag" style="color:#d4af37;"></i>
+                                    <span style="color:#d4af37; font-weight:700;">@prop.Price.ToString("N0") @prop.PriceCurrency</span>
+                                </div>
+                                <div class="info-item" style="display:flex; align-items:center; gap:6px;">
+                                    <i class="far fa-calendar-alt" style="color:#d4af37;"></i> @prop.CreatedAt.ToString("yyyy-MM-dd")
+                                </div>
+                                @if (isGovAdmin)
+                                {
+                                    <div class="info-item" style="display:flex; align-items:center; gap:6px;">
+                                        <i class="fas fa-city" style="color:#d4af37;"></i>
+                                        <span style="color:#b8b0a0;">@(prop.City?.NameAr ?? "غير محدد")</span>
+                                    </div>
+                                }
+                            </div>
+                            <div class="details" style="margin-top:12px; padding-top:12px; border-top:1px solid rgba(212,175,55,0.06); color:#b8b0a0; font-size:14px; display:flex; gap:8px;">
+                                <i class="fas fa-file-alt" style="color:#d4af37; margin-top:2px;"></i>
+                                <span>
+                                    @{
+                                        var desc = prop.Description ?? "لا يوجد وصف";
+                                        if (desc.Length > 150) { desc = desc.Substring(0, 150) + "..."; }
+                                    }
+                                    @desc
+                                </span>
+                            </div>
+                            <div class="actions" style="display:flex; gap:10px; margin-top:12px; flex-wrap:wrap;">
+                                <a href="@Url.Action("DetailSearch", "Properties", new { code = prop.Code })" class="btn-details" style="text-decoration:none; display:inline-flex; align-items:center; gap:6px;">
+                                    <i class="fas fa-eye"></i> التفاصيل
+                                </a>
+                                <button class="btn-approve" onclick="approveProperty(@prop.Id)"><i class="fas fa-check"></i> موافقة</button>
+                                <button class="btn-reject" onclick="rejectProperty(@prop.Id)"><i class="fas fa-times"></i> رفض</button>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="empty-state">
+                        <i class="fas fa-check-circle" style="color:#2ed573; font-size:48px; display:block; margin-bottom:16px;"></i>
+                        <p style="font-size:16px;">جميع العقارات تمت مراجعتها</p>
+                        <p style="font-size:13px; color:#5a5a5a;">لا توجد عقارات معلقة للموافقة عليها</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== Toast ===== -->
+    <div class="toast-center" id="toastCenter">
+        <i class="fas fa-check-circle"></i>
+        <span class="toast-msg" id="toastMessage">تم التنفيذ بنجاح</span>
+    </div>
+
+    <!-- ===== Modal تفاصيل العقار ===== -->
+    <div class="modal-details-overlay" id="propertyDetailsModal">
+        <div class="modal-details-box">
+            <button class="close-modal" onclick="closePropertyDetails()" style="position:absolute; top:15px; left:20px; font-size:28px; color:#b8b0a0; cursor:pointer; background:none; border:none;">&times;</button>
+            <h3 id="modalDetailTitle" style="font-size:26px; font-weight:700; color:#d4af37; text-align:center; border-bottom:1px solid rgba(212,175,55,0.1); padding-bottom:15px; margin-bottom:25px;">تفاصيل العقار</h3>
+            <div id="modalDetailContent"></div>
+            <button class="btn-close-modal" onclick="closePropertyDetails()">إغلاق</button>
+        </div>
+    </div>
+
+    <!-- ===== مودال اختيار المحافظة ===== -->
+    <div class="modal-governorate-overlay" id="governorateModal">
+        <div class="modal-governorate-box">
+            <button class="close-modal-gov" onclick="closeGovernorateModal()">&times;</button>
+            <h3><i class="fas fa-map-marker-alt"></i> اختيار المحافظة</h3>
+            <label for="govSelect">المحافظة التي سيديرها:</label>
+            <select id="govSelect">
+                <option value="">-- اختر محافظة --</option>
+                <option value="دمشق">دمشق</option>
+                <option value="ريف دمشق">ريف دمشق</option>
+                <option value="حلب">حلب</option>
+                <option value="حمص">حمص</option>
+                <option value="حماة">حماة</option>
+                <option value="اللاذقية">اللاذقية</option>
+                <option value="طرطوس">طرطوس</option>
+                <option value="دير الزور">دير الزور</option>
+                <option value="الحسكة">الحسكة</option>
+                <option value="الرقة">الرقة</option>
+                <option value="إدلب">إدلب</option>
+                <option value="درعا">درعا</option>
+                <option value="السويداء">السويداء</option>
+                <option value="القنيطرة">القنيطرة</option>
+            </select>
+            <div class="gov-actions">
+                <button class="btn-gov-confirm" onclick="confirmPromote()">تأكيد</button>
+                <button class="btn-gov-cancel" onclick="closeGovernorateModal()">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let toastTimeout = null;
+        let pendingUserId = null;
+        const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+
+        // ===== التاريخ =====
+        const now = new Date();
+        document.getElementById('currentDate').textContent = now.toLocaleDateString('ar-EG', {
+            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+        });
+
+        // ===== Toast =====
+        function showToast(type, message) {
+            const toast = document.getElementById('toastCenter');
+            const icon = toast.querySelector('i');
+            const msg = document.getElementById('toastMessage');
+            toast.className = 'toast-center';
+            if (type === 'success') { toast.classList.add('success'); icon.className = 'fas fa-check-circle'; }
+            else if (type === 'error') { toast.classList.add('error'); icon.className = 'fas fa-exclamation-circle'; }
+            else { toast.classList.add('info'); icon.className = 'fas fa-info-circle'; }
+            msg.textContent = message;
+            clearTimeout(toastTimeout);
+            toast.classList.add('show');
+            toastTimeout = setTimeout(() => toast.classList.remove('show'), 3500);
+        }
+
+        // ===== كلمة السر =====
+        function togglePassword(el, realPass) {
+            if (el.textContent.includes('•')) {
+                el.textContent = realPass || '********';
+                el.style.color = '#d4af37';
+            } else {
+                el.textContent = '•'.repeat(8);
+                el.style.color = '#b8b0a0';
+            }
+        }
+
+        // ============================================================
+        // ✅ تبديل حالة المستخدم (حظر / تنشيط)
+        // ============================================================
+        function toggleUserStatus(userId) {
+            if (!confirm('هل أنت متأكد من تغيير حالة هذا المستخدم؟')) return;
+
+            fetch('/Dashboard/ToggleUserStatus', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'RequestVerificationToken': token
+                },
+                body: 'userId=' + encodeURIComponent(userId)
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showToast('success', data.message);
+                        setTimeout(() => location.reload(), 1500);
+                    } else {
+                        showToast('error', data.message);
+                    }
+                })
+                .catch(error => {
+                    showToast('error', '❌ حدث خطأ: ' + error.message);
+                });
+        }
+
+        // ============================================================
+        // ✅ تنزيل المدير (Demote)
+        // ============================================================
+        function demoteFromAdmin(userId) {
+            if (!confirm('هل أنت متأكد من تنزيل هذا المدير إلى مستخدم عادي؟')) return;
+
+            fetch('/Dashboard/DemoteFromAdmin', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'RequestVerificationToken': token
+                },
+                body: 'userId=' + encodeURIComponent(userId)
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showToast('success', data.message);
+                        setTimeout(() => location.reload(), 1500);
+                    } else {
+                        showToast('error', data.message);
+                    }
+                })
+                .catch(error => {
+                    showToast('error', '❌ حدث خطأ: ' + error.message);
+                });
+        }
+
+        // ============================================================
+        // ✅ ترقية المستخدم (مع اختيار المحافظة)
+        // ============================================================
+        function openGovernorateModal(userId) {
+            pendingUserId = userId;
+            document.getElementById('govSelect').value = '';
+            document.getElementById('governorateModal').classList.add('active');
+        }
+
+        function closeGovernorateModal() {
+            document.getElementById('governorateModal').classList.remove('active');
+            pendingUserId = null;
+        }
+
+        function confirmPromote() {
+            const governorate = document.getElementById('govSelect').value;
+            if (!governorate) {
+                showToast('error', '⚠️ الرجاء اختيار محافظة');
+                return;
+            }
+            if (!pendingUserId) {
+                showToast('error', '⚠️ خطأ: لم يتم تحديد المستخدم');
+                return;
+            }
+
+            fetch('/Dashboard/PromoteToAdmin', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'RequestVerificationToken': token
+                },
+                body: 'userId=' + encodeURIComponent(pendingUserId) + '&governorate=' + encodeURIComponent(governorate)
+            })
+                .then(response => response.json())
+                .then(data => {
+                    closeGovernorateModal();
+                    if (data.success) {
+                        showToast('success', data.message);
+                        setTimeout(() => location.reload(), 1500);
+                    } else {
+                        showToast('error', data.message);
+                    }
+                })
+                .catch(error => {
+                    closeGovernorateModal();
+                    showToast('error', '❌ حدث خطأ: ' + error.message);
+                });
+        }
+
+        // ============================================================
+        // العقارات المعلقة (موافقة / رفض)
+        // ============================================================
+        function approveProperty(id) {
+            if (!confirm('هل أنت متأكد من الموافقة على هذا العقار؟')) return;
+            fetch('/Dashboard/ApproveProperty?id=' + id, {
+                method: 'POST',
+                headers: { 'RequestVerificationToken': token }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showToast('success', data.message);
+                        const card = document.querySelector(`[data-prop-id="${id}"]`);
+                        if (card) card.remove();
+                        const countSpan = document.querySelector('.pending-properties h4 span');
+                        if (countSpan) {
+                            const count = document.querySelectorAll('.property-pending-card').length;
+                            countSpan.textContent = `(${count})`;
+                            if (count === 0) {
+                                document.getElementById('pendingPropertiesList').innerHTML = `
+                                                    <div class="empty-state">
+                                                        <i class="fas fa-check-circle" style="color:#2ed573;font-size:48px;display:block;margin-bottom:16px;"></i>
+                                                        <p style="font-size:16px;">جميع العقارات تمت مراجعتها</p>
+                                                    </div>`;
+                            }
+                        }
+                    } else { showToast('error', data.message); }
+                })
+                .catch(error => {
+                    showToast('error', '❌ حدث خطأ في الاتصال');
+                });
+        }
+
+        function rejectProperty(id) {
+            if (!confirm('هل أنت متأكد من رفض وحذف هذا العقار نهائياً؟')) return;
+            fetch('/Dashboard/RejectProperty?id=' + id, {
+                method: 'POST',
+                headers: { 'RequestVerificationToken': token }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showToast('success', data.message);
+                        const card = document.querySelector(`[data-prop-id="${id}"]`);
+                        if (card) card.remove();
+                        const countSpan = document.querySelector('.pending-properties h4 span');
+                        if (countSpan) {
+                            const count = document.querySelectorAll('.property-pending-card').length;
+                            countSpan.textContent = `(${count})`;
+                            if (count === 0) {
+                                document.getElementById('pendingPropertiesList').innerHTML = `
+                                                    <div class="empty-state">
+                                                        <i class="fas fa-check-circle" style="color:#2ed573;font-size:48px;display:block;margin-bottom:16px;"></i>
+                                                        <p style="font-size:16px;">جميع العقارات تمت مراجعتها</p>
+                                                    </div>`;
+                            }
+                        }
+                    } else { showToast('error', data.message); }
+                })
+                .catch(error => {
+                    showToast('error', '❌ حدث خطأ في الاتصال');
+                });
+        }
+
+        // ============================================================
+        // تفاصيل العقار (مودال)
+        // ============================================================
+        function showPropertyDetails(id, title, owner, price, date, desc) {
+            document.getElementById('modalDetailTitle').textContent = '📋 ' + title;
+            document.getElementById('modalDetailContent').innerHTML = `
+                                <div class="detail-row"><span class="label">العنوان</span><span class="value">${title}</span></div>
+                                <div class="detail-row"><span class="label">المالك</span><span class="value">${owner || 'غير معروف'}</span></div>
+                                <div class="detail-row"><span class="label">السعر</span><span class="value">${price}</span></div>
+                                <div class="detail-row"><span class="label">تاريخ الإضافة</span><span class="value">${date}</span></div>
+                                <div class="detail-row" style="flex-direction:column; align-items:stretch;">
+                                    <span class="label">الوصف</span>
+                                    <span style="color:#b8b0a0; text-align:right; line-height:1.8; margin-top:5px;">${desc || 'لا يوجد وصف'}</span>
+                                </div>
+                            `;
+            document.getElementById('propertyDetailsModal').classList.add('active');
+        }
+
+        function closePropertyDetails() {
+            document.getElementById('propertyDetailsModal').classList.remove('active');
+        }
+
+        document.getElementById('propertyDetailsModal').addEventListener('click', function (e) {
+            if (e.target === this) closePropertyDetails();
+        });
+
+        document.getElementById('governorateModal').addEventListener('click', function (e) {
+            if (e.target === this) closeGovernorateModal();
+        });
+
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                if (document.getElementById('propertyDetailsModal').classList.contains('active')) closePropertyDetails();
+                if (document.getElementById('governorateModal').classList.contains('active')) closeGovernorateModal();
+            }
+        });
+
+        // ============================================================
+        // تدريب الخوارزمية (للمدير العام فقط، لكن الكود موجود)
+        // ============================================================
+        function trainAlgorithm() {
+            const btn = document.getElementById('trainBtn');
+            if (!btn) return;
+            if (btn.classList.contains('loading')) return;
+            btn.classList.add('loading');
+            btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> جاري تدريب الخوارزميات ...`;
+            fetch('/Dashboard/TrainAlgorithm', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    btn.classList.remove('loading');
+                    btn.innerHTML = `<i class="fas fa-brain"></i> تدريب الخوارزمية الذكية <i class="fas fa-robot" style="font-size:18px;"></i>`;
+                    if (data.success) { showToast('success', data.message); }
+                    else { showToast('error', data.message); }
+                })
+                .catch(error => {
+                    btn.classList.remove('loading');
+                    btn.innerHTML = `<i class="fas fa-brain"></i> تدريب الخوارزمية الذكية <i class="fas fa-robot" style="font-size:18px;"></i>`;
+                    showToast('error', '❌ فشل الاتصال بالخادم: ' + error.message);
+                });
+        }
+
+        // ============================================================
+        // تحريك الأرقام (للمدير العام)
+        // ============================================================
+        document.querySelectorAll('.stat-card .number').forEach(el => {
+            const target = parseInt(el.textContent);
+            if (isNaN(target)) return;
+            let current = 0;
+            const inc = Math.ceil(target / 50);
+            const interval = setInterval(() => {
+                current += inc;
+                if (current >= target) { current = target; clearInterval(interval); }
+                el.textContent = current.toLocaleString();
+            }, 25);
+        });
+
+        // ============================================================
+        // 📊 الرسوم البيانية (للمدير العام فقط)
+        // ============================================================
+        document.addEventListener('DOMContentLoaded', function () {
+            const cityLabels = @Html.Raw(Json.Serialize(ViewBag.CityLabels ?? new string[] { }));
+            const cityData = @Html.Raw(Json.Serialize(ViewBag.CityData ?? new int[] { }));
+            const cityCtx = document.getElementById('cityChart');
+            if (cityCtx && cityLabels.length > 0) {
+                new Chart(cityCtx, {
+                    type: 'pie',
+                    data: {
+                        labels: cityLabels,
+                        datasets: [{
+                            data: cityData,
+                            backgroundColor: ['#a8e6cf', '#a3c4f3', '#ffb3b3', '#ffe28a', '#d7bde2', '#fdb07b', '#a8e6cf', '#ffb3b3'],
+                            borderColor: '#192e43',
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: { color: '#e8e6e3', font: { family: 'Tajawal', size: 12 } }
+                            }
+                        }
+                    }
+                });
+            } else if (cityCtx) {
+                cityCtx.parentElement.innerHTML = '<p style="text-align:center; color:#b8b0a0;">لا توجد بيانات كافية لعرض الرسم البياني</p>';
+            }
+
+            const clusterLabels = @Html.Raw(Json.Serialize(ViewBag.ClusterLabels ?? new string[] { }));
+            const clusterData = @Html.Raw(Json.Serialize(ViewBag.ClusterData ?? new int[] { }));
+            const clusterCtx = document.getElementById('clusterChart');
+            if (clusterCtx) {
+                new Chart(clusterCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: clusterLabels,
+                        datasets: [{
+                            label: 'عدد العقارات',
+                            data: clusterData,
+                            backgroundColor: ['#a8e6cf', '#ffe28a', '#ffb3b3'],
+                            borderColor: '#192e43',
+                            borderWidth: 2,
+                            borderRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: { color: '#b8b0a0', font: { family: 'Tajawal' } },
+                                grid: { color: 'rgba(255,255,255,0.05)' }
+                            },
+                            x: {
+                                ticks: { color: '#e8e6e3', font: { family: 'Tajawal', size: 12 } },
+                                grid: { display: false }
+                            }
+                        }
+                    }
+                });
+            }
+
+            const similarityLabels = @Html.Raw(Json.Serialize(ViewBag.SimilarityLabels ?? new string[] { }));
+            const similarityData = @Html.Raw(Json.Serialize(ViewBag.SimilarityData ?? new int[] { }));
+            const simCtx = document.getElementById('similarityChart');
+            if (simCtx) {
+                new Chart(simCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: similarityLabels,
+                        datasets: [{
+                            label: 'عدد أزواج العقارات',
+                            data: similarityData,
+                            backgroundColor: ['#ffb3b3', '#fdb07b', '#ffe28a', '#a8e6cf', '#a3c4f3'],
+                            borderColor: '#192e43',
+                            borderWidth: 2,
+                            borderRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: { color: '#b8b0a0', font: { family: 'Tajawal' } },
+                                grid: { color: 'rgba(255,255,255,0.05)' }
+                            },
+                            x: {
+                                ticks: { color: '#e8e6e3', font: { family: 'Tajawal', size: 10 } },
+                                grid: { display: false }
+                            }
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

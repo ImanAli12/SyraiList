@@ -1,0 +1,187 @@
+﻿@using RealEstateWebApp.Models
+@using Microsoft.AspNetCore.Identity
+@inject SignInManager<ApplicationUser> SignInManager
+@{
+    Layout = null;
+    var cities = ViewBag.Cities as List<City> ?? new List<City>();
+    var propertyTypes = ViewBag.PropertyTypes as List<PropertyType> ?? new List<PropertyType>();
+}
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ابحث عن عقار | SYRELIS</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="~/css/search.css" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        /* جميع التنسيقات كما هي (تم حذفها للاختصار، ولكن ضعها كاملة من الملف السابق) */
+        /* ... ضع كل التنسيقات هنا ... */
+    </style>
+</head>
+<body>
+
+    <!-- ===== شريط التنقل ===== -->
+    <nav class="navbar">
+        <img class="logo" src="~/image/hero.png" alt="SYRELIS" />
+        <ul class="nav-links">
+           <li><a href="/Home/Index?skipRedirect=true"><span class="link_span">الرئيسية</span></a></li>
+            <li><a href="/Properties/Create" target="_blank" id="announceLink"><span class="link_span">أعلن عن عقارك</span></a></li>
+            <li><a href="/Search/Index"><span class="link_span">ابحث عن عقارك</span></a></li>
+            <li><a href="/Account/Index"><span class="link_span">محفوظاتي</span></a></li>
+           <li> <a href="/Home/Index?skipRedirect=true#contactSection" id="contactNavLink"> <span class="link_span">تواصل معنا</span>  </a></li>
+        </ul>
+        <div class="navbar-right">
+            @if (SignInManager.IsSignedIn(User))
+            {
+                var userName = User.Identity?.Name ?? "مستخدم";
+                var firstLetter = userName.Length > 0 ? userName[0].ToString() : "?";
+                <div class="user-avatar" title="@userName">
+                </div>
+            }
+
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="page-header">
+            <h1 class="page-title">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                ابحث عن عقارك
+            </h1>
+            <span class="page-subtitle">
+                <i class="fa-regular fa-building"></i> حدد تفضيلاتك للعثور على العقار المناسب
+            </span>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <div class="icon-circle"><i class="fa-solid fa-sliders"></i></div>
+                فلترة البحث
+            </div>
+            <form id="searchForm" novalidate>
+                <div class="search-grid">
+
+                    <!-- نوع العقار -->
+                    <div class="form-group">
+                        <label><i class="fa-solid fa-building"></i> نوع العقار</label>
+                        <select class="form-control" id="searchType">
+                            <option value="" disabled selected hidden>اختر نوع العقار</option>
+                            @foreach (var type in propertyTypes)
+                            {
+                                <option value="@type.Id">@type.NameAr</option>
+                            }
+                        </select>
+                    </div>
+
+                    <!-- طبيعة العقار -->
+                   
+
+                    <!-- المدينة -->
+                    <div class="form-group">
+                        <label><i class="fa-solid fa-city"></i> المدينة</label>
+                        <select class="form-control" id="searchCity">
+                            <option value="" disabled selected hidden>اختر المدينة</option>
+                            @foreach (var city in cities)
+                            {
+                                <option value="@city.Id">@city.NameAr</option>
+                            }
+                        </select>
+                    </div>
+
+                    <!-- ✅ الحي (حقل نصي) -->
+                    <div class="form-group">
+                        <label><i class="fa-solid fa-location-dot"></i> الحي / المنطقة</label>
+                        <input type="text" class="form-control" id="searchNeighborhood" placeholder="مثال: المالكي، الشعلان..." />
+                    </div>
+
+                    <!-- السعر (من - إلى) -->
+                    <div class="form-group">
+                        <label><i class="fa-solid fa-dollar-sign"></i> السعر من</label>
+                        <input type="number" class="form-control" id="searchMinPrice" placeholder="أدنى سعر" min="0" data-validate="positive" />
+                        <span class="error-message" id="error-searchMinPrice"><i class="fa-solid fa-circle-exclamation"></i> قيمة غير سالبة</span>
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fa-solid fa-dollar-sign"></i> السعر إلى</label>
+                        <input type="number" class="form-control" id="searchMaxPrice" placeholder="أقصى سعر" min="0" data-validate="positive" />
+                        <span class="error-message" id="error-searchMaxPrice"><i class="fa-solid fa-circle-exclamation"></i> قيمة غير سالبة</span>
+                    </div>
+
+                    <!-- العملة -->
+                    
+
+                    <!-- المساحة (من - إلى) -->
+                    <div class="form-group">
+                        <label><i class="fa-solid fa-vector-square"></i> المساحة من (م²)</label>
+                        <input type="number" class="form-control" id="searchMinArea" placeholder="أدنى مساحة" min="0" data-validate="positive" />
+                        <span class="error-message" id="error-searchMinArea"><i class="fa-solid fa-circle-exclamation"></i> قيمة غير سالبة</span>
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fa-solid fa-vector-square"></i> المساحة إلى (م²)</label>
+                        <input type="number" class="form-control" id="searchMaxArea" placeholder="أقصى مساحة" min="0" data-validate="positive" />
+                        <span class="error-message" id="error-searchMaxArea"><i class="fa-solid fa-circle-exclamation"></i> قيمة غير سالبة</span>
+                    </div>
+
+                    <!-- عدد الغرف -->
+                    <div class="form-group">
+                        <label><i class="fa-solid fa-bed"></i> عدد الغرف</label>
+                        <input type="number" class="form-control" id="searchRooms" placeholder="أدخل عدد الغرف" min="0" data-validate="positive" />
+                        <span class="error-message" id="error-searchRooms"><i class="fa-solid fa-circle-exclamation"></i> قيمة غير سالبة</span>
+                    </div>
+
+                    <!-- عدد الحمامات -->
+                    <div class="form-group">
+                        <label><i class="fa-solid fa-bath"></i> عدد الحمامات</label>
+                        <input type="number" class="form-control" id="searchBathrooms" placeholder="أدخل عدد الحمامات" min="0" data-validate="positive" />
+                        <span class="error-message" id="error-searchBathrooms"><i class="fa-solid fa-circle-exclamation"></i> قيمة غير سالبة</span>
+                    </div>
+
+                    <!-- الطابق -->
+                    <div class="form-group">
+                        <label><i class="fa-solid fa-layer-group"></i> رقم الطابق</label>
+                        <input type="number" class="form-control" id="searchFloor" placeholder="أدخل رقم الطابق" min="0" data-validate="positive" />
+                        <span class="error-message" id="error-searchFloor"><i class="fa-solid fa-circle-exclamation"></i> قيمة غير سالبة</span>
+                    </div>
+
+                    <!-- عدد الطوابق الكلي -->
+                    
+
+                </div>
+
+                <div class="form-actions">
+                    <div class="btn-group">
+                        <button type="reset" class="btn btn-secondary" id="resetBtn">
+                            <i class="fa-solid fa-rotate-right"></i> إعادة تعيين
+                        </button>
+                    </div>
+                    <div class="btn-group">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fa-solid fa-magnifying-glass"></i> بحث
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div id="resultsContainer"></div>
+    </div>
+
+
+
+    </div>
+    </div>
+    </div>
+
+    <!-- زر العودة للأعلى -->
+    <button class="scroll-top" id="scrollBtn" onclick="window.scrollTo({ top: 0, behavior: 'smooth' })">
+        <i class="fa-solid fa-arrow-up"></i>
+    </button>
+
+    <script src="~/js/search.js"></script>
+
+</body>
+</html>

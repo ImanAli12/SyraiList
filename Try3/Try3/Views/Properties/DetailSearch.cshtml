@@ -1,0 +1,1655 @@
+﻿@using Microsoft.AspNetCore.Identity
+@inject SignInManager<RealEstateWebApp.Models.ApplicationUser> SignInManager
+@model RealEstateWebApp.Models.Property
+@{
+    ViewData["Title"] = "تفاصيل العقار";
+    Layout = null;
+    // ✅ الترتيب من الأرخص إلى الأعلى، وعرض أول 10 فقط
+    var similar = (ViewBag.SimilarProperties as List<RealEstateWebApp.Models.Property> ?? new List<RealEstateWebApp.Models.Property>())
+        .OrderBy(p => p.Price)
+        .Take(30)
+        .ToList();
+}
+<!-- للتأكد من الـ ID -->
+@Html.AntiForgeryToken()
+<input type="hidden" id="propertyId" value="@Model.Id" />
+
+@* ========== الدوال المساعدة ========== *@
+@functions {
+    // 1️⃣ إرجاع اسم صورة عشوائية واحدة بناءً على النوع
+    public string GetRandomImageByType(string typeName)
+    {
+        var imageList = GetImageListByType(typeName);
+        var random = new Random();
+        return imageList[random.Next(imageList.Count)];
+    }
+
+    // 2️⃣ إرجاع قائمة بأسماء الصور المتاحة حسب النوع
+    public List<string> GetImageListByType(string typeName)
+    {
+        var imageList = new List<string> { "default.jpg" };
+        if (!string.IsNullOrEmpty(typeName))
+        {
+            if (typeName.Contains("فيلا"))
+                imageList = new List<string> { "villa_1.jpg", "villa_2.jpg", "villa_3.jpg", "villa_4.jpg", "villa_5.jpg" };
+            else if (typeName.Contains("شقة"))
+                imageList = new List<string> { "apartment_1.jpg", "apartment_2.jpg", "apartment_3.jpg", "apartment_4.jpg", "apartment_5.jpg" };
+            else if (typeName.Contains("مكتب"))
+                imageList = new List<string> { "office_1.jpg", "office_2.jpg", "office_3.jpg", "office_4.jpg", "office_5.jpg" };
+            else if (typeName.Contains("أرض زراعية"))
+                imageList = new List<string> { "farmland_1.jpg", "farmland_2.jpg", "farmland_3.jpg", "farmland_4.jpg", "farmland_5.jpg" };
+        }
+        return imageList;
+    }
+
+    // 3️⃣ إرجاع قائمة عناوين صور عشوائية (حتى 5 صور مختلفة)
+    public List<string> GetRandomImageUrlsByType(string typeName, int count = 5)
+    {
+        var imageList = GetImageListByType(typeName);
+        var random = new Random();
+        var shuffled = imageList.OrderBy(x => random.Next()).ToList();
+        var selected = shuffled.Take(count).ToList();
+        return selected.Select(name => "/image/" + name).ToList();
+    }
+
+    // 4️⃣ الحصول على رابط الصورة الرئيسية للعقار (قاعدة بيانات أو عشوائي)
+    public string GetPropertyImageUrl(RealEstateWebApp.Models.Property prop)
+    {
+        if (prop.Images != null && prop.Images.Any())
+        {
+            return prop.Images.First().ImageUrl;
+        }
+        var randomImage = GetRandomImageByType(prop.PropertyType?.NameAr);
+        return "/image/" + randomImage;
+    }
+}
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>تفاصيل العقار | SYRELIS</title>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <style>
+        /* ===== جميع التنسيقات كما هي (لا تغيير) ===== */
+        :root {
+            --dark: #192e43;
+            --gold: #d4af37;
+            --gray: #51596a;
+            --white: #ffffff;
+            --gold-light: #f4e5c2;
+            --border: #e8e4dc;
+            --bg-light: #f8f9fa;
+            --shadow: 0 4px 16px rgba(11, 19, 32, 0.08);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(126deg, rgba(11, 19, 32, 0.85), rgb(11 19 32 / 62%)), url(https://images.unsplash.com/photo-1600585154526-990dced4db0d?q=80&w=2070&auto=format);
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            font-family: "Tajawal", sans-serif;
+            color: var(--gold);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* ===== Navbar ===== */
+        .navbar {
+            background: rgba(11, 19, 32, 0.96);
+            padding: 0 1rem;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.4);
+            justify-content: space-between;
+            box-shadow: 0px 15px 30px -10px rgb(23, 22, 70);
+            position: sticky;
+            top: 0;
+            z-index: 2000;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+            .navbar .logo {
+                width: 82px;
+                margin: 8px 0;
+                flex-shrink: 0;
+            }
+
+            .navbar .nav-links {
+                display: flex;
+                gap: 30px;
+                list-style: none;
+                flex-wrap: wrap;
+                justify-content: center;
+                padding: 0;
+                margin: 0;
+                align-items: center;
+                flex: 1;
+            }
+
+                .navbar .nav-links a {
+                    color: #f2efea;
+                    text-decoration: none;
+                    font-weight: 600;
+                    font-size: 0.95rem;
+                    transition: 0.3s;
+                    white-space: nowrap;
+                }
+
+                    .navbar .nav-links a:hover {
+                        color: #d4af37;
+                    }
+
+        .navbar-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-right: 3cm;
+        }
+
+        .user-avatar {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #d4af37, #b8941f);
+            color: #0b1320;
+            font-weight: 800;
+            font-size: 1.1rem;
+            font-family: 'Tajawal', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid rgba(212, 175, 55, 0.4);
+            box-shadow: 0 2px 10px rgba(212, 175, 55, 0.2);
+            text-decoration: none;
+            user-select: none;
+            position: relative;
+        }
+
+            .user-avatar:hover {
+                transform: scale(1.08);
+                box-shadow: 0 4px 20px rgba(212, 175, 55, 0.4);
+                border-color: #d4af37;
+            }
+
+            .user-avatar .tooltip {
+                position: absolute;
+                top: 110%;
+                left: 50%;
+                transform: translateX(-50%);
+                background: #0b1320;
+                color: #d4af37;
+                padding: 6px 14px;
+                border-radius: 8px;
+                font-size: 0.75rem;
+                font-weight: 600;
+                white-space: nowrap;
+                opacity: 0;
+                visibility: hidden;
+                transition: all 0.3s ease;
+                border: 1px solid rgba(212, 175, 55, 0.2);
+                pointer-events: none;
+                font-family: 'Tajawal', sans-serif;
+            }
+
+            .user-avatar:hover .tooltip {
+                opacity: 1;
+                visibility: visible;
+                top: 120%;
+            }
+
+            .user-avatar .tooltip::before {
+                content: '';
+                position: absolute;
+                bottom: 100%;
+                left: 50%;
+                transform: translateX(-50%);
+                border: 6px solid transparent;
+                border-bottom-color: #0b1320;
+            }
+
+        .login-btn-nav {
+            background: transparent;
+            border: 1.5px dashed #d4af37;
+            color: #d4af37;
+            padding: 10px 22px;
+            border-radius: 40px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            font-family: "Tajawal", sans-serif;
+            cursor: pointer;
+            transition: all 0.3s;
+            flex-shrink: 0;
+        }
+
+            .login-btn-nav:hover {
+                background: #d4af37;
+                border: 1px solid rgb(50, 39, 11);
+                color: #0b1320;
+            }
+
+            .login-btn-nav.logout-active {
+                color: #d4af37;
+                border: 1.5px solid #d4af37;
+            }
+
+                .login-btn-nav.logout-active:hover {
+                    background: #d4af37;
+                    color: #0b1320;
+                }
+
+        /* ===== Page Header ===== */
+        .page-header {
+            padding: 30px 35px;
+            margin-bottom: 49px;
+            box-shadow: 0 8px 24px rgba(11, 19, 32, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 20px;
+            width: 100%;
+            border-bottom: 2px solid #e2bd46;
+        }
+
+        .back-button {
+            width: 57px;
+            height: 54px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 12px 25px;
+            background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+            border: 2px solid var(--white);
+            border-radius: 12px;
+            color: #d4af37;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            font-family: "Tajawal", sans-serif;
+        }
+
+        .page-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .page-title h1 {
+            color: #e2bd46 !important;
+            margin: 0;
+            font-size: 2rem;
+            font-weight: 800;
+        }
+
+        .page-title p {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1rem;
+            margin: 5px 0 0 0;
+        }
+
+        /* ===== Card ===== */
+        .card {
+            max-width: 100%;
+            background: var(--white);
+            border-radius: 20px;
+            padding: 28px;
+            margin-top: 30px;
+            margin-bottom: 61px;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+        }
+
+        /* ===== Detail Header ===== */
+        .detail-header-card {
+            background: linear-gradient(135deg, #f8f9fa, #ffffff);
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 25px;
+            border: 2px solid var(--gold);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .detail-header-info h2 {
+            font-size: 1.8rem;
+            color: var(--dark);
+            margin-bottom: 5px;
+        }
+
+        .detail-header-info .detail-type-badge {
+            background: var(--dark);
+            color: var(--gold);
+            padding: 6px 20px;
+            border-radius: 25px;
+            font-weight: 700;
+            font-size: 1rem;
+            display: inline-block;
+        }
+
+        .detail-header-price {
+            text-align: left;
+        }
+
+            .detail-header-price .price-label {
+                font-size: 0.85rem;
+                color: var(--gray);
+            }
+
+            .detail-header-price .price-value {
+                font-size: 2rem;
+                font-weight: 900;
+                color: var(--gold);
+                font-family: 'Cinzel', serif;
+            }
+
+            .detail-header-price .price-currency {
+                font-size: 1rem;
+                color: var(--gray);
+            }
+
+        /* ===== Quick Stats ===== */
+        .detail-quick-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 15px;
+            padding: 20px;
+            background: var(--bg-light);
+            border-radius: 16px;
+            border: 2px solid var(--border);
+            margin-bottom: 25px;
+        }
+
+        .detail-stat-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px;
+            background: white;
+            border-radius: 14px;
+            border: 2px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+            .detail-stat-item:hover {
+                border-color: var(--gold);
+            }
+
+        .detail-stat-icon {
+            width: 45px;
+            height: 45px;
+            background: linear-gradient(135deg, var(--dark) 0%, #1a3355 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fad765;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        .detail-stat-info .detail-stat-value {
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: var(--dark);
+            line-height: 1;
+        }
+
+        .detail-stat-info .detail-stat-label {
+            font-size: 0.8rem;
+            color: var(--gray);
+            margin-top: 4px;
+            font-weight: 500;
+        }
+
+        /* ===== معلومات المالك (🔥 تمت الإضافة هنا) ===== */
+        .owner-info-section {
+            background: linear-gradient(135deg, rgba(212, 175, 55, 0.05), transparent);
+            padding: 20px;
+            border-radius: 16px;
+            border: 2px solid var(--gold);
+            margin-bottom: 25px;
+        }
+
+        .owner-info-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .owner-info-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            background: white;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            flex: 1;
+            min-width: 200px;
+        }
+
+            .owner-info-item .owner-icon {
+                color: var(--gold);
+                font-size: 1.4rem;
+                width: 40px;
+                height: 40px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: var(--bg-light);
+                border-radius: 50%;
+            }
+
+            .owner-info-item .owner-label {
+                font-size: 0.8rem;
+                color: var(--gray);
+            }
+
+            .owner-info-item .owner-value {
+                font-weight: 700;
+                color: var(--dark);
+                font-size: 1.1rem;
+            }
+
+        /* ===== Sections ===== */
+        .detail-section {
+            margin-bottom: 30px;
+            padding-bottom: 30px;
+            border-bottom: 2px solid var(--border);
+        }
+
+            .detail-section:last-child {
+                border-bottom: none;
+                margin-bottom: 0;
+                padding-bottom: 0;
+            }
+
+        .detail-section-title {
+            margin-top: 26px;
+            color: #192e43;
+            font-size: 1.6rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+            .detail-section-title i {
+                color: #ffffff;
+                font-size: 1.3rem;
+                background: #192e43;
+                width: 48px;
+                height: 48px;
+                border-radius: 12px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                box-shadow: 2px 3px 0px rgb(103 103 103 / 45%);
+            }
+
+            .detail-section-title::after {
+                content: "";
+                flex: 1;
+                height: 3px;
+                background: linear-gradient(to left, transparent, var(--gold-light), var(--gold));
+                margin-right: 15px;
+                border-radius: 2px;
+            }
+
+        .detail-description-text {
+            font-size: 1.1rem;
+            color: #0e0e0e;
+            line-height: 1.9;
+            white-space: pre-wrap;
+            padding: 18px;
+            background: var(--bg-light);
+            border-radius: 14px;
+            border-right: 4px solid var(--gold);
+        }
+
+        /* ===== Gallery ===== */
+        .detail-gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 14px;
+        }
+
+        .detail-gallery-item {
+            position: relative;
+            aspect-ratio: 4/3;
+            border-radius: 14px;
+            overflow: hidden;
+            cursor: pointer;
+            border: 3px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+            .detail-gallery-item:hover {
+                transform: scale(1.05);
+                border-color: var(--gold);
+                box-shadow: 0 15px 35px rgba(212, 175, 55, 0.4);
+                z-index: 2;
+            }
+
+            .detail-gallery-item img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                transition: transform 0.5s ease;
+            }
+
+            .detail-gallery-item:hover img {
+                transform: scale(1.1);
+            }
+
+            .detail-gallery-item .detail-zoom-icon {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                width: 45px;
+                height: 45px;
+                background: rgba(212, 175, 55, 0.95);
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: var(--dark);
+                opacity: 0;
+                transition: all 0.3s ease;
+                font-size: 1.2rem;
+            }
+
+            .detail-gallery-item:hover .detail-zoom-icon {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1.1);
+            }
+
+        /* ===== Features ===== */
+        .detail-features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+        }
+
+        .detail-feature-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 13px 18px;
+            background: linear-gradient(135deg, var(--bg-light) 0%, #ffffff 100%);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            font-weight: 700;
+            color: var(--dark);
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+            .detail-feature-item:hover {
+                border-color: var(--gold);
+            }
+
+            .detail-feature-item i {
+                color: #fad765;
+                font-size: 1.4rem;
+                width: 22px;
+                text-align: center;
+            }
+
+        /* ===== Location ===== */
+        .detail-location-wrapper {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 25px;
+            align-items: start;
+        }
+
+        .detail-static-map {
+            width: 100%;
+            height: 330px;
+            border-radius: 18px;
+            overflow: hidden;
+            border: 3px solid #d4af37;
+            transition: all 0.3s ease;
+        }
+
+            .detail-static-map:hover {
+                border-color: var(--gold);
+                box-shadow: 0 15px 40px rgba(212, 175, 55, 0.3);
+            }
+
+        #detailStaticMap {
+            width: 100%;
+            height: 100%;
+        }
+
+        .detail-location-info {
+            background: linear-gradient(135deg, var(--bg-light) 0%, #ffffff 100%);
+            padding: 25px;
+            border-radius: 18px;
+            border: 2px solid var(--border);
+            box-shadow: var(--shadow);
+        }
+
+            .detail-location-info h4 {
+                color: var(--dark);
+                font-size: 1.15rem;
+                margin-bottom: 18px;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                font-weight: 800;
+            }
+
+                .detail-location-info h4 i {
+                    color: #fad765;
+                    font-size: 1.3rem;
+                }
+
+        .detail-location-detail {
+            text-align: start;
+            display: flex;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+            color: var(--gray);
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            justify-content: flex-start;
+            align-items: flex-start;
+        }
+
+            .detail-location-detail:last-child {
+                border-bottom: none;
+            }
+
+            .detail-location-detail i {
+                color: #fad765;
+                margin-top: 4px;
+                width: 20px;
+                font-size: 1.1rem;
+            }
+
+            .detail-location-detail strong {
+                text-align: start;
+                color: var(--dark);
+                display: block;
+                font-size: 0.95rem;
+                margin-bottom: 3px;
+                font-weight: 700;
+            }
+
+        /* ===== Buttons ===== */
+        .btn {
+            padding: 12px 26px;
+            border: none;
+            border-radius: 10px;
+            font-family: "Tajawal", sans-serif;
+            font-size: 0.98rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            text-decoration: none;
+            transition: 0.3s;
+        }
+
+        .btn-primary {
+            background: var(--dark);
+            color: #ffffff;
+            box-shadow: -1px 2px 9px rgb(11 19 32 / 73%);
+        }
+
+            .btn-primary:hover {
+                background: #ffffff;
+                color: #1a3250;
+            }
+
+        .btn-gold {
+            background: var(--gold);
+            color: var(--dark);
+            box-shadow: -1px 2px 9px rgba(212, 175, 55, 0.4);
+        }
+
+            .btn-gold:hover {
+                background: var(--gold-dark);
+                color: #ffffff;
+            }
+
+            .btn-gold.added {
+                background: #22c55e;
+                color: #fff;
+                border-color: #22c55e;
+            }
+
+        /* ===== العقارات المشابهة ===== */
+        .similar-section-title {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: var(--dark);
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid var(--gold);
+        }
+
+            .similar-section-title i {
+                color: #ffffff;
+                font-size: 1.3rem;
+                background: #192e43;
+                width: 48px;
+                height: 48px;
+                border-radius: 12px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                box-shadow: 2px 3px 0px rgb(103 103 103 / 45%);
+            }
+
+            .similar-section-title .count-badge {
+                font-size: 1rem;
+                font-weight: 400;
+                color: var(--gray);
+                margin-right: auto;
+                background: var(--bg-light);
+                padding: 4px 18px;
+                border-radius: 30px;
+                border: 1px solid var(--border);
+            }
+
+        .similar-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 22px;
+        }
+
+        .similar-card {
+            border-radius: 14px;
+            overflow: hidden;
+            background: var(--white);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+            transition: transform 0.3s, box-shadow 0.3s;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+
+            .similar-card:hover {
+                transform: translateY(-6px);
+                box-shadow: 0 12px 35px rgba(212, 175, 55, 0.2);
+                border-color: var(--gold);
+            }
+
+        .similar-card-img {
+            height: 190px;
+            background: var(--bg-light);
+            position: relative;
+            overflow: hidden;
+        }
+
+            .similar-card-img img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+
+        .similar-card-badge {
+            position: absolute;
+            top: 11px;
+            right: 11px;
+            background: var(--dark);
+            color: var(--gold);
+            padding: 4px 13px;
+            border-radius: 18px;
+            font-size: 0.76rem;
+            font-weight: 700;
+        }
+
+        .similar-card-body {
+            padding: 17px;
+        }
+
+        .similar-card-price {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: var(--gold);
+            margin-bottom: 2px;
+        }
+
+        .similar-card-title {
+            font-weight: 700;
+            color: var(--dark);
+            font-size: 1rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .similar-card-location {
+            color: var(--gray);
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+
+            .similar-card-location i {
+                color: var(--gold);
+            }
+
+        .similar-card-features {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+            font-size: 0.8rem;
+            color: var(--gray);
+        }
+
+            .similar-card-features span {
+                background: var(--bg-light);
+                padding: 4px 10px;
+                border-radius: 6px;
+                display: flex;
+                align-items: center;
+                gap: 4px;
+            }
+
+                .similar-card-features span i {
+                    color: var(--gold);
+                }
+
+        .empty-similar {
+            text-align: center;
+            padding: 50px 20px;
+            background: var(--bg-light);
+            border-radius: 16px;
+            border: 2px dashed rgba(212, 175, 55, 0.3);
+        }
+
+            .empty-similar i {
+                font-size: 3rem;
+                color: var(--gold);
+                margin-bottom: 15px;
+                opacity: 0.7;
+            }
+
+            .empty-similar p {
+                color: var(--gray);
+                font-size: 1.1rem;
+                font-weight: 500;
+            }
+
+        /* ===== Notification ===== */
+        .notification-success {
+            background: rgba(25, 46, 67, 0.92);
+            border: 2px solid #d4af37;
+            color: #d4af37;
+        }
+
+            .notification-success #notificationIcon {
+                color: #22c55e;
+            }
+
+        .notification-error {
+            background: rgba(25, 46, 67, 0.92);
+            border: 2px solid #d4af37;
+            color: #d4af37;
+        }
+
+            .notification-error #notificationIcon {
+                color: #ef4444;
+            }
+
+        .notification-warning {
+            background: rgba(25, 46, 67, 0.92);
+            border: 2px solid #d4af37;
+            color: #d4af37;
+        }
+
+            .notification-warning #notificationIcon {
+                color: #f59e0b;
+            }
+
+        .notification-info {
+            background: rgba(25, 46, 67, 0.92);
+            border: 2px solid #d4af37;
+            color: #d4af37;
+        }
+
+            .notification-info #notificationIcon {
+                color: #3b82f6;
+            }
+
+        /* ===== Responsive ===== */
+        @@media (max-width: 992px) {
+            .detail-location-wrapper {
+                grid-template-columns: 1fr;
+            }
+
+            .navbar .nav-links {
+                gap: 25px;
+            }
+
+            .navbar-right {
+                margin-right: 1cm;
+            }
+        }
+
+        @@media (max-width: 768px) {
+            .detail-quick-stats {
+                grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+                padding: 15px;
+            }
+
+            .detail-header-card {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .detail-header-price {
+                text-align: right;
+                width: 100%;
+            }
+
+            .navbar {
+                flex-direction: column;
+                padding: 10px;
+            }
+
+                .navbar .logo {
+                    width: 50px;
+                }
+
+                .navbar .nav-links {
+                    gap: 15px;
+                }
+
+                    .navbar .nav-links a {
+                        font-size: 0.8rem;
+                    }
+
+            .container {
+                padding: 0.8rem;
+            }
+
+            .detail-gallery-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+
+            .detail-section-title {
+                font-size: 1.2rem;
+            }
+
+                .detail-section-title i {
+                    width: 38px;
+                    height: 38px;
+                    font-size: 1rem;
+                }
+
+            .detail-header-info h2 {
+                font-size: 1.4rem;
+            }
+
+            .detail-header-price .price-value {
+                font-size: 1.5rem;
+            }
+
+            .navbar-right {
+                margin-right: 1cm;
+            }
+
+            .similar-grid {
+                grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+                gap: 16px;
+            }
+
+            .similar-card-img {
+                height: 160px;
+            }
+        }
+
+        @@media (max-width: 480px) {
+            .navbar .nav-links {
+                gap: 8px;
+            }
+
+                .navbar .nav-links a {
+                    font-size: 0.7rem;
+                }
+
+            .container {
+                padding: 0.5rem;
+            }
+
+            .detail-header-card {
+                padding: 15px;
+            }
+
+            .detail-quick-stats {
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+                padding: 10px;
+            }
+
+            .detail-stat-item {
+                padding: 10px;
+            }
+
+            .detail-stat-icon {
+                width: 36px;
+                height: 36px;
+                font-size: 1rem;
+            }
+
+            .detail-stat-info .detail-stat-value {
+                font-size: 1rem;
+            }
+
+            .detail-gallery-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+            }
+
+            .detail-features-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .detail-location-wrapper {
+                grid-template-columns: 1fr;
+            }
+
+            .detail-static-map {
+                height: 250px;
+            }
+
+            .detail-location-info {
+                padding: 15px;
+            }
+
+            .detail-section-title {
+                font-size: 1rem;
+            }
+
+                .detail-section-title i {
+                    width: 32px;
+                    height: 32px;
+                    font-size: 0.8rem;
+                }
+
+            .btn {
+                padding: 8px 16px;
+                font-size: 0.8rem;
+            }
+
+            .btn-gold, .btn-primary {
+                justify-content: center;
+                width: 100%;
+            }
+
+            .navbar-right {
+                margin-right: 0.5cm;
+            }
+
+            .similar-grid {
+                grid-template-columns: 1fr;
+                gap: 14px;
+            }
+
+            .similar-card-img {
+                height: 180px;
+            }
+
+            .similar-section-title {
+                font-size: 1.2rem;
+            }
+
+                .similar-section-title i {
+                    width: 36px;
+                    height: 36px;
+                    font-size: 0.9rem;
+                }
+
+            .similar-card-price {
+                font-size: 1.1rem;
+            }
+
+            .owner-info-grid {
+                flex-direction: column;
+            }
+
+            .owner-info-item {
+                min-width: unset;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ====== نافبار ====== -->
+    <nav class="navbar">
+        <img class="logo" src="/image/hero.png" alt="SYRELIS" />
+        <ul class="nav-links">
+           <li><a href="/Home/Index?skipRedirect=true"><span class="link_span">الرئيسية</span></a></li>
+            <li><a href="/Properties/Create">أعلن عن عقارك</a></li>
+            <li><a href="/Search/Index"><span class="link_span">ابحث عن عقارك</span></a></li>
+            <li><a href="@Url.Action("MyFavorites", "Properties")">محفوظاتي</a></li>
+           <li> <a href="/Home/Index?skipRedirect=true#contactSection" id="contactNavLink"> <span class="link_span">تواصل معنا</span>  </a></li>
+        </ul>
+        <div class="navbar-right">
+            @if (SignInManager.IsSignedIn(User))
+            {
+                var userName = User.Identity?.Name ?? "مستخدم";
+                var firstLetter = userName.Length > 0 ? userName[0].ToString().ToUpper() : "?";
+                <div class="user-avatar">
+                    @firstLetter
+                    <span class="tooltip">@userName</span>
+                </div>
+            }
+            else
+            {
+                <button class="login-btn-nav" id="openModalBtn">
+                    <i class="fas fa-sign-in-alt" style="margin-left: 6px;"></i> تسجيل الدخول
+                </button>
+            }
+        </div>
+    </nav>
+
+    <!-- ====== المحتوى ====== -->
+    <div class="container">
+
+        <!-- ====== Page Header ====== -->
+        <div class="page-header">
+            <div class="page-info">
+                <a href="/Properties/MyProperties" class="back-button">
+                    <i class="fas fa-arrow-right"></i>
+                </a>
+                <div class="page-title">
+                    <h1>تفاصيل العقار</h1>
+                    <p>جميع المعلومات والتفاصيل الكاملة للعقار</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+
+            <!-- ====== الهيدر ====== -->
+            <div class="detail-header-card">
+                <div class="detail-header-info">
+                    <h2>@(Model.PropertyType?.NameAr ?? "عقار")</h2>
+                    <span class="detail-type-badge">@(Model.PropertyType?.NameAr ?? "عقار")</span>
+                    <span class="detail-type-badge" style="background:var(--gold);color:var(--dark);margin-right:10px;">@Model.Status</span>
+                </div>
+                <div class="detail-header-price">
+                    <div class="price-label">السعر</div>
+                    <div class="price-value">@Model.Price.ToString("N0") <span class="price-currency">@Model.PriceCurrency</span></div>
+                </div>
+            </div>
+
+            <!-- ====== الإحصائيات السريعة ====== -->
+            <div class="detail-quick-stats">
+                @if (!string.IsNullOrEmpty(Model.Code))
+                {
+                    var propNumber = Model.Code.Split('-').LastOrDefault() ?? "0";
+                    <div class="detail-stat-item">
+                        <div class="detail-stat-icon"><i class="fa-solid fa-hashtag"></i></div>
+                        <div class="detail-stat-info">
+                            <div class="detail-stat-value">@propNumber</div>
+                            <div class="detail-stat-label">رقم المحضر</div>
+                        </div>
+                    </div>
+                }
+                <div class="detail-stat-item">
+                    <div class="detail-stat-icon"><i class="fa-solid fa-ruler-combined"></i></div>
+                    <div class="detail-stat-info">
+                        <div class="detail-stat-value">@Model.Area م²</div>
+                        <div class="detail-stat-label">المساحة</div>
+                    </div>
+                </div>
+                @if (Model.Rooms > 0)
+                {
+                    <div class="detail-stat-item">
+                        <div class="detail-stat-icon"><i class="fa-solid fa-bed"></i></div>
+                        <div class="detail-stat-info">
+                            <div class="detail-stat-value">@Model.Rooms</div>
+                            <div class="detail-stat-label">عدد الغرف</div>
+                        </div>
+                    </div>
+                }
+                @if (Model.Bathrooms > 0)
+                {
+                    <div class="detail-stat-item">
+                        <div class="detail-stat-icon"><i class="fa-solid fa-bath"></i></div>
+                        <div class="detail-stat-info">
+                            <div class="detail-stat-value">@Model.Bathrooms</div>
+                            <div class="detail-stat-label">الحمامات</div>
+                        </div>
+                    </div>
+                }
+                @if (Model.Floor.HasValue)
+                {
+                    <div class="detail-stat-item">
+                        <div class="detail-stat-icon"><i class="fa-solid fa-layer-group"></i></div>
+                        <div class="detail-stat-info">
+                            <div class="detail-stat-value">@Model.Floor</div>
+                            <div class="detail-stat-label">الطابق</div>
+                        </div>
+                    </div>
+                }
+                @if (Model.AvailableFrom.HasValue)
+                {
+                    <div class="detail-stat-item">
+                        <div class="detail-stat-icon"><i class="fa-solid fa-calendar-check"></i></div>
+                        <div class="detail-stat-info">
+                            <div class="detail-stat-value">@Model.AvailableFrom.Value.ToString("yyyy/MM/dd")</div>
+                            <div class="detail-stat-label">متاح من</div>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <!-- ========================================================== -->
+            <!-- 🔥🔥🔥 قسم معلومات المالك (تمت الإضافة هنا) 🔥🔥🔥        -->
+            <!-- ========================================================== -->
+            <div class="owner-info-section">
+                <h3 class="detail-section-title" style="margin-top:0;">
+                    <i class="fa-solid fa-user-tie"></i> معلومات المالك
+                </h3>
+                <div class="owner-info-grid">
+                    <div class="owner-info-item">
+                        <div class="owner-icon"><i class="fa-solid fa-user"></i></div>
+                        <div>
+                            <div class="owner-label">المالك</div>
+                            <div class="owner-value">@(Model.Advertiser?.FullName ?? "غير معروف")</div>
+                        </div>
+                    </div>
+                    <div class="owner-info-item">
+                        <div class="owner-icon"><i class="fa-solid fa-phone"></i></div>
+                        <div>
+                            <div class="owner-label">رقم الاتصال</div>
+                            <div class="owner-value" style="direction:ltr; text-align:left;">
+                                @(Model.AdvertiserPhone ?? "غير متوفر")
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ====== الوصف ====== -->
+            @if (!string.IsNullOrEmpty(Model.Description))
+            {
+                <div class="detail-section">
+                    <h3 class="detail-section-title"><i class="fa-solid fa-align-right"></i> وصف العقار</h3>
+                    <div class="detail-description-text">@Model.Description</div>
+                </div>
+            }
+
+            <!-- ========================================================== -->
+            <!-- 🔥 معرض الصور (باستخدام المنطق الجديد)                      -->
+            <!-- ========================================================== -->
+            <div class="detail-section">
+                <h3 class="detail-section-title">
+                    <i class="fa-solid fa-images"></i> معرض الصور
+                    @{
+                        var galleryCount = (Model.Images != null && Model.Images.Any()) ? Model.Images.Count : 5;
+                    }
+                    <span style="font-size:1rem; font-weight:400; color:var(--gray); margin-right:10px;">(@galleryCount صورة)</span>
+                </h3>
+                <div class="detail-gallery-grid">
+                    @{
+                        var galleryImages = new List<string>();
+
+                        if (Model.Images != null && Model.Images.Any())
+                        {
+                            galleryImages = Model.Images.Select(img => img.ImageUrl).ToList();
+                        }
+                        else
+                        {
+                            galleryImages = GetRandomImageUrlsByType(Model.PropertyType?.NameAr, 5);
+                        }
+                    }
+
+                    @foreach (var imgUrl in galleryImages)
+                    {
+                        <div class="detail-gallery-item" onclick="openImageLightbox('@imgUrl')">
+                            <img src="@imgUrl"
+                                 alt="صورة العقار"
+                                 onerror="this.onerror=null; this.src='/image/default.jpg';" />
+                            <div class="detail-zoom-icon"><i class="fa-solid fa-magnifying-glass-plus"></i></div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- ====== المرافق ====== -->
+            @if (Model.Features != null && Model.Features.Any())
+            {
+                <div class="detail-section">
+                    <h3 class="detail-section-title"><i class="fa-solid fa-check-double"></i> المرافق والخدمات</h3>
+                    <div class="detail-features-grid">
+                        @foreach (var feature in Model.Features)
+                        {
+                            <div class="detail-feature-item">
+                                <i class="fa-solid @(feature.IconClass ?? "fa-check")"></i>
+                                <span>@feature.NameAr</span>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+
+            <!-- ====== الموقع ====== -->
+            <!-- ====== الموقع ====== -->
+            <div class="detail-section">
+                <h3 class="detail-section-title"><i class="fa-solid fa-map-location-dot"></i> الموقع</h3>
+                <div class="detail-location-wrapper">
+                    <div class="detail-static-map" style="height:400px; border-radius:18px; overflow:hidden; border:3px solid #d4af37; position:relative;">
+                        @if (Model.Latitude.HasValue && Model.Longitude.HasValue)
+                        {
+                            var lat = Model.Latitude.Value.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                            var lng = Model.Longitude.Value.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                            <iframe width="100%"
+                                    height="100%"
+                                    frameborder="0"
+                                    scrolling="no"
+                                    marginheight="0"
+                                    marginwidth="0"
+                                    src="https://www.openstreetmap.org/export/embed.html?bbox=@(Model.Longitude.Value - 0.01)%2C@(Model.Latitude.Value - 0.01)%2C@(Model.Longitude.Value + 0.01)%2C@(Model.Latitude.Value + 0.01)&layer=mapnik&marker=@lat%2C@lng"
+                                    style="border:none;"
+                                    allowfullscreen>
+                            </iframe>
+                        }
+                        else
+                        {
+                            <div style="display:flex; align-items:center; justify-content:center; height:100%; background:#f0f0f0; color:#666; font-size:1.2rem;">
+                                <i class="fa-solid fa-map-pin" style="color:#d4af37; margin-left:10px;"></i> لا توجد إحداثيات لهذا العقار
+                            </div>
+                        }
+                    </div>
+                    <div class="detail-location-info">
+                        <h4><i class="fa-solid fa-circle-info"></i> تفاصيل الموقع</h4>
+                        @if (!string.IsNullOrEmpty(Model.City?.NameAr))
+                        {
+                            <div class="detail-location-detail">
+                                <i class="fa-solid fa-city"></i>
+                                <div><strong>المدينة</strong>@Model.City.NameAr</div>
+                            </div>
+                        }
+                        @if (!string.IsNullOrEmpty(Model.Neighborhood))
+                        {
+                            <div class="detail-location-detail">
+                                <i class="fa-solid fa-map-pin"></i>
+                                <div><strong>الحي</strong>@Model.Neighborhood</div>
+                            </div>
+                        }
+                        @if (!string.IsNullOrEmpty(Model.Address))
+                        {
+                            <div class="detail-location-detail">
+                                <i class="fa-solid fa-road"></i>
+                                <div><strong>الشارع</strong>@Model.Address</div>
+                            </div>
+                        }
+                        @if (!string.IsNullOrEmpty(Model.DetailedLocation))
+                        {
+                            <div class="detail-location-detail">
+                                <i class="fa-solid fa-location-crosshairs"></i>
+                                <div><strong>الموقع التفصيلي</strong>@Model.DetailedLocation</div>
+                            </div>
+                        }
+                        @if (Model.Latitude.HasValue && Model.Longitude.HasValue)
+                        {
+                            <div class="detail-location-detail">
+                                <i class="fa-solid fa-globe"></i>
+                                <div>
+                                    <strong>الإحداثيات</strong>
+                                    @Model.Latitude.Value.ToString("F5"), @Model.Longitude.Value.ToString("F5")
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- ====== أزرار ====== -->
+            <div style="text-align:center; margin-top:30px; display:flex; justify-content:center; gap:15px; flex-wrap:wrap;">
+                <button onclick="addToFavorites(@Model.Id)" class="btn btn-gold" id="favoriteBtn">
+                    <i class="fa-regular fa-heart"></i> إضافة إلى المفضلة
+                </button>
+                <a href="/Properties/MyProperties" class="btn btn-primary">
+                    <i class="fa-solid fa-arrow-right"></i> العودة إلى عقاراتي
+                </a>
+            </div>
+
+        </div>
+
+        <!-- ====== العقارات المشابهة ====== -->
+        <div class="card" style="margin-top: 0px;">
+            <div class="similar-section-title">
+                <i class="fa-regular fa-copy"></i>
+                عقارات مشابهة
+                <span class="count-badge">@similar.Count عقار</span>
+            </div>
+
+            @if (similar.Any())
+            {
+                <div class="similar-grid">
+                    @foreach (var item in similar)
+                    {
+                        var img = GetPropertyImageUrl(item);
+                        <a href="@Url.Action("DetailSearch", "Properties", new { code = item.Code })" class="similar-card">
+                            <div class="similar-card-img">
+                                <img src="@img"
+                                     alt="@item.Title"
+                                     onerror="this.onerror=null; this.src='/image/default.jpg';" />
+                                <span class="similar-card-badge">@item.Status</span>
+                            </div>
+                            <div class="similar-card-body">
+                                <div class="similar-card-price">@item.Price.ToString("N0") @item.PriceCurrency</div>
+                                <div class="similar-card-title">@item.Title</div>
+                                <div class="similar-card-location">
+                                    <i class="fa-solid fa-location-dot"></i>
+                                    @(item.City?.NameAr ?? "") - @(item.Neighborhood ?? "")
+                                </div>
+                                <div class="similar-card-features">
+                                    <span><i class="fa-solid fa-vector-square"></i> @item.Area م²</span>
+                                    <span><i class="fa-solid fa-bed"></i> @item.Rooms غرف</span>
+                                    <span><i class="fa-solid fa-bath"></i> @item.Bathrooms حمامات</span>
+                                    @if (item.Floor.HasValue)
+                                    {
+                                        <span><i class="fa-solid fa-layer-group"></i> طابق @item.Floor</span>
+                                    }
+                                </div>
+                            </div>
+                        </a>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="empty-similar">
+                    <i class="fa-regular fa-building"></i>
+                    <p>لا توجد عقارات مشابهة حالياً</p>
+                </div>
+            }
+        </div>
+
+    </div>
+
+    <!-- ====== مودال الإشعارات ====== -->
+    <div id="customNotification" style="display:none; position:fixed; top:20px; left:50%; transform:translateX(-50%); z-index:99999; min-width:300px; max-width:500px; padding:18px 28px; border-radius:16px; box-shadow:0 15px 50px rgba(0,0,0,0.5); backdrop-filter:blur(12px); font-family:'Tajawal',sans-serif; text-align:center; transition:all 0.4s ease; opacity:0; direction:rtl;">
+        <div id="notificationIcon" style="font-size:2rem; margin-bottom:8px;"></div>
+        <div id="notificationMessage" style="font-size:1.1rem; font-weight:700;"></div>
+    </div>
+
+    <!-- ====== سكربتات ====== -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // ====== عرض الصور بتكبير ======
+        function openImageLightbox(src) {
+            var lightbox = document.createElement('div');
+            lightbox.style.cssText = 'position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.95); z-index:999999; display:flex; align-items:center; justify-content:center; padding:20px; cursor:pointer;';
+            lightbox.innerHTML = `
+                                                <img src="${src}" style="max-width:90%; max-height:90vh; border-radius:16px; box-shadow:0 25px 80px rgba(0,0,0,0.8);">
+                                                <button style="position:absolute; top:25px; right:25px; width:50px; height:50px; background:#d4af37; border:none; border-radius:50%; cursor:pointer; font-size:1.4rem; color:#192e43; transition:all 0.3s;" onclick="this.parentElement.remove()">
+                                                    <i class="fa-solid fa-xmark"></i>
+                                                </button>
+                                            `;
+            lightbox.onclick = function (e) { if (e.target === this) this.remove(); };
+            document.body.appendChild(lightbox);
+            document.body.style.overflow = 'hidden';
+            lightbox.addEventListener('remove', function () { document.body.style.overflow = ''; });
+        }
+
+        // ====== الخريطة ======
+        @if (Model.Latitude.HasValue && Model.Longitude.HasValue)
+        {
+            <text>
+                document.addEventListener('DOMContentLoaded', function () {
+                    var mapContainer = document.getElementById('detailStaticMap');
+                    if (!mapContainer) return;
+                    var map = L.map('detailStaticMap', {
+                        center: [@Model.Latitude.Value.ToString("F6"), @Model.Longitude.Value.ToString("F6")],
+                        zoom: 15,
+                        dragging: false,
+                        scrollWheelZoom: false,
+                        touchZoom: false,
+                        doubleClickZoom: false,
+                        boxZoom: false,
+                        keyboard: false,
+                        zoomControl: false,
+                        attributionControl: false
+                    });
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+                    var pegmanSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 23 38" width="44" height="44">
+                                                                    <path d="M16.6 38.1h-5.5l-.2-2.9-.2 2.9H5.2L5 25.3l-.8 2a1.53 1.53 0 01-1.9.9l-1.2-.4a1.58 1.58 0 01-1-1.9v-.1c.3-.9 3.1-11.2 3.1-11.2a2.66 2.66 0 012.3-2l.6-.5a6.93 6.93 0 014.7-12 6.8 6.8 0 014.9 2 7 7 0 012 4.9 6.65 6.65 0 01-2.2 5l.7.5a2.78 2.78 0 012.4 2s2.9 11.2 2.9 11.3a1.53 1.53 0 01-.9 1.9l-1.3.4a1.63 1.63 0 01-1.9-.9l-.7-1.8z" fill="#333" opacity=".7"/>
+                                                                    <path d="m20.6 26.1-2.9-11.3a1.71 1.71 0 00-1.6-1.2H5.7a1.69 1.69 0 00-1.5 1.3L1.1 26.2a.61.61 0 00.3.7l1.1.4a.61.61 0 00.7-.3l2.7-6.7.2 16.8h3.6l.6-9.3a.47.47 0 01.44-.5h.06c.4 0 .4.2.5.5l.6 9.3h3.6l.2-16.8 2.5 6.6a.52.52 0 00.66.31l1.2-.4a.57.57 0 00.5-.7Z" fill="#fdbf2d"/>
+                                                                    <circle cx="10.9" cy="7" r="5.9" fill="#fdbf2d"/>
+                                                                </svg>`;
+                    var pegmanIcon = L.divIcon({ className: 'pegman-marker', html: pegmanSVG, iconSize: [44, 44], iconAnchor: [22, 42] });
+                    L.marker([@Model.Latitude.Value.ToString("F6"), @Model.Longitude.Value.ToString("F6")], { icon: pegmanIcon, draggable: false }).addTo(map);
+                    setTimeout(function () { map.invalidateSize(); }, 300);
+                });
+            </text>
+        }
+
+            // ====== إضافة إلى المفضلة ======
+            function showCustomNotification(message, type) {
+                var notif = document.getElementById('customNotification');
+                var icon = document.getElementById('notificationIcon');
+                var msg = document.getElementById('notificationMessage');
+
+                notif.className = '';
+                notif.style.display = 'block';
+                notif.style.opacity = '0';
+
+                var iconClass = '';
+                if (type === 'success') {
+                    notif.classList.add('notification-success');
+                    iconClass = 'fa-solid fa-circle-check';
+                } else if (type === 'error') {
+                    notif.classList.add('notification-error');
+                    iconClass = 'fa-solid fa-circle-xmark';
+                } else if (type === 'warning') {
+                    notif.classList.add('notification-warning');
+                    iconClass = 'fa-solid fa-triangle-exclamation';
+                } else {
+                    notif.classList.add('notification-info');
+                    iconClass = 'fa-solid fa-circle-info';
+                }
+
+                icon.className = iconClass;
+                msg.textContent = message;
+
+                setTimeout(function () { notif.style.opacity = '1'; }, 50);
+                setTimeout(function () {
+                    notif.style.opacity = '0';
+                    setTimeout(function () { notif.style.display = 'none'; }, 400);
+                }, 3000);
+            }
+
+        function addToFavorites(propertyId) {
+            var token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+            if (!propertyId) {
+                showCustomNotification('⚠️ خطأ: لم يتم العثور على العقار', 'error');
+                return;
+            }
+            fetch('/Properties/AddToFavorites?propertyId=' + propertyId, {
+                method: 'POST',
+                headers: { 'RequestVerificationToken': token || '' }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showCustomNotification(data.message, 'success');
+                        var btn = document.getElementById('favoriteBtn');
+                        if (btn) {
+                            btn.innerHTML = '<i class="fa-solid fa-heart"></i> مضاف إلى المفضلة';
+                            btn.classList.add('added');
+                            btn.disabled = true;
+                        }
+                    } else {
+                        showCustomNotification(data.message, data.message.includes('بالفعل') ? 'warning' : 'error');
+                    }
+                })
+                .catch(error => {
+                    showCustomNotification('❌ حدث خطأ أثناء إضافة العقار إلى المفضلة', 'error');
+                    console.error(error);
+                });
+        }
+
+        // ====== التحقق من حالة المفضلة عند تحميل الصفحة ======
+        document.addEventListener('DOMContentLoaded', function () {
+            var propertyId = @Model.Id;
+            var token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+            fetch('/Properties/CheckFavorite?propertyId=' + propertyId, {
+                method: 'GET',
+                headers: { 'RequestVerificationToken': token || '' }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.isFavorite) {
+                        var btn = document.getElementById('favoriteBtn');
+                        if (btn) {
+                            btn.innerHTML = '<i class="fa-solid fa-heart"></i> مضاف إلى المفضلة';
+                            btn.classList.add('added');
+                            btn.disabled = true;
+                        }
+                    }
+                })
+                .catch(error => console.error('خطأ في التحقق من المفضلة:', error));
+        });
+    </script>
+
+</body>
+</html>

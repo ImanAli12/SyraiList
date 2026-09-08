@@ -1,0 +1,1960 @@
+﻿@model RealEstateWebApp.Models.PropertyViewModel
+@using RealEstateWebApp.Models
+@using Microsoft.AspNetCore.Identity
+@inject SignInManager<ApplicationUser> SignInManager
+@{
+    ViewData["Title"] = "تعديل العقار";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>تعديل العقار | SYRELIS</title>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <style>
+        /* ===== جميع التنسيقات كما هي (نفس الكود السابق) ===== */
+        :root {
+            --dark: #192e43;
+            --gold: #d4af37;
+            --gray: #51596a;
+            --white: #ffffff;
+            --gold-light: #f4e5c2;
+            --gold-dark: #917005;
+            --border: #e8e4dc;
+            --bg-light: #f8f9fa;
+            --shadow: 0 4px 16px rgba(11, 19, 32, 0.08);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(126deg, rgba(11, 19, 32, 0.85), rgb(11 19 32 / 62%)), url(https://images.unsplash.com/photo-1600585154526-990dced4db0d?q=80&w=2070&auto=format);
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            font-family: 'Tajawal', sans-serif;
+            color: var(--gold);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* ===== Navbar ===== */
+        .navbar {
+            background: rgba(11, 19, 32, 0.96);
+            padding: 0 1rem;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.4);
+            justify-content: space-between;
+            box-shadow: 0px 15px 30px -10px rgb(23, 22, 70);
+            position: sticky;
+            top: 0;
+            z-index: 2000;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+            .navbar .logo {
+                width: 82px;
+                margin: 8px 0;
+                flex-shrink: 0;
+            }
+
+            .navbar .nav-links {
+                display: flex;
+                gap: 30px;
+                list-style: none;
+                flex-wrap: wrap;
+                justify-content: center;
+                padding: 0;
+                margin: 0;
+                align-items: center;
+                flex: 1;
+            }
+
+                .navbar .nav-links a {
+                    color: #f2efea;
+                    text-decoration: none;
+                    font-weight: 600;
+                    font-size: 0.95rem;
+                    transition: 0.3s;
+                    white-space: nowrap;
+                }
+
+                    .navbar .nav-links a:hover {
+                        color: #d4af37;
+                    }
+
+        .navbar-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-right: 3cm;
+        }
+
+        .user-avatar {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #d4af37, #b8941f);
+            color: #0b1320;
+            font-weight: 800;
+            font-size: 1.1rem;
+            font-family: 'Tajawal', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid rgba(212, 175, 55, 0.4);
+            box-shadow: 0 2px 10px rgba(212, 175, 55, 0.2);
+            text-decoration: none;
+            user-select: none;
+            position: relative;
+        }
+
+            .user-avatar:hover {
+                transform: scale(1.08);
+                box-shadow: 0 4px 20px rgba(212, 175, 55, 0.4);
+                border-color: #d4af37;
+            }
+
+            .user-avatar .tooltip {
+                position: absolute;
+                top: 110%;
+                left: 50%;
+                transform: translateX(-50%);
+                background: #0b1320;
+                color: #d4af37;
+                padding: 6px 14px;
+                border-radius: 8px;
+                font-size: 0.75rem;
+                font-weight: 600;
+                white-space: nowrap;
+                opacity: 0;
+                visibility: hidden;
+                transition: all 0.3s ease;
+                border: 1px solid rgba(212, 175, 55, 0.2);
+                pointer-events: none;
+                font-family: 'Tajawal', sans-serif;
+            }
+
+            .user-avatar:hover .tooltip {
+                opacity: 1;
+                visibility: visible;
+                top: 120%;
+            }
+
+            .user-avatar .tooltip::before {
+                content: '';
+                position: absolute;
+                bottom: 100%;
+                left: 50%;
+                transform: translateX(-50%);
+                border: 6px solid transparent;
+                border-bottom-color: #0b1320;
+            }
+
+        .login-btn-nav {
+            background: transparent;
+            border: 1.5px dashed #d4af37;
+            color: #d4af37;
+            padding: 10px 22px;
+            border-radius: 40px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            font-family: 'Tajawal', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s;
+            flex-shrink: 0;
+        }
+
+            .login-btn-nav:hover {
+                background: #d4af37;
+                border: 1px solid rgb(50, 39, 11);
+                color: #0b1320;
+                transform: translateY(-2px);
+                box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+            }
+
+            .login-btn-nav.logout-active {
+                color: #d4af37;
+                border: 1.5px solid #d4af37;
+            }
+
+                .login-btn-nav.logout-active:hover {
+                    background: #d4af37;
+                    color: #0b1320;
+                }
+
+        /* ===== Page Header ===== */
+        .page-header {
+            padding: 30px 35px;
+            margin-bottom: 49px;
+            box-shadow: 0 8px 24px rgba(11, 19, 32, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 20px;
+            width: 100%;
+            border-bottom: 2px solid #e2bd46;
+        }
+
+        .back-button {
+            width: 57px;
+            height: 54px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 12px 25px;
+            background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+            border: 2px solid var(--white);
+            border-radius: 12px;
+            color: var(--gold);
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            font-family: "Tajawal", sans-serif;
+        }
+
+            .back-button:hover {
+                transform: translateX(5px);
+                box-shadow: 0 6px 16px rgba(212, 175, 55, 0.5);
+            }
+
+        .page-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .page-title h1 {
+            color: #e2bd46 !important;
+            margin: 0;
+            font-size: 2rem;
+            font-weight: 800;
+        }
+
+        .page-title p {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1rem;
+            margin: 5px 0 0 0;
+        }
+
+        /* ===== Card ===== */
+        .card {
+            max-width: 100%;
+            background: var(--white);
+            border-radius: 20px;
+            padding: 28px;
+            margin-top: 30px;
+            margin-bottom: 61px;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+        }
+
+        .card-header {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--dark);
+            margin-bottom: 22px;
+            padding-bottom: 14px;
+            border-bottom: 2px solid var(--bg-light);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+            .card-header .icon-circle {
+                width: 40px;
+                height: 40px;
+                background: #192e43;
+                border-radius: 16px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: #ffd754;
+                font-size: 1.2rem;
+            }
+
+        /* ===== تلميحات الحقول ===== */
+        .form-group .field-hint {
+            font-size: 0.8rem;
+            color: var(--gray);
+            margin-top: 2px;
+            display: block;
+        }
+
+        .form-group .error-message {
+            color: #dc3545;
+            font-size: 0.85rem;
+            margin-top: 4px;
+            display: none;
+        }
+
+        .form-control.error {
+            border-color: #dc3545 !important;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+        }
+
+            .form-group.full {
+                grid-column: 1 / -1;
+            }
+
+            .form-group label {
+                font-weight: 500;
+                color: var(--dark);
+                font-size: 1rem;
+            }
+
+                .form-group label .req {
+                    font-weight: 800;
+                    color: #b20011;
+                    font-size: 1.3rem;
+                }
+
+        .form-control {
+            padding: 12px 15px;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            font-family: "Tajawal", sans-serif;
+            font-size: 0.95rem;
+            background: var(--white);
+            color: var(--dark);
+            transition: all 0.25s;
+        }
+
+            .form-control:focus {
+                outline: none;
+                border-color: #192e43;
+                box-shadow: 0 0 0 2px rgb(215 219 232);
+            }
+
+        select.form-control {
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23333' stroke-width='2'><polyline points='6 9 12 15 18 9'/></svg>");
+            background-repeat: no-repeat;
+            background-position: left 12px center;
+            padding: 10px 12px 10px 35px;
+            background-color: white;
+            cursor: pointer;
+        }
+
+        .btn {
+            padding: 12px 26px;
+            border: none;
+            border-radius: 10px;
+            font-family: "Tajawal", sans-serif;
+            font-size: 0.98rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            text-decoration: none;
+            transition: 0.3s;
+        }
+
+        .btn-primary {
+            background: var(--dark);
+            color: #ffffff;
+            box-shadow: -1px 2px 9px rgb(11 19 32 / 73%);
+        }
+
+            .btn-primary:hover {
+                background: #ffffff;
+                color: #1a3250;
+            }
+
+        .btn-secondary {
+            border: 1px solid #1a3250;
+            background: #1a314d;
+            color: #ffffff;
+            border-radius: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+            .btn-secondary:hover {
+                background: #ffffff;
+                color: #1a3250;
+            }
+
+        .form-actions {
+            display: flex !important;
+            justify-content: space-between;
+            padding-top: 23px !important;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 11px;
+        }
+
+        /* ===== Map ===== */
+        .map-wrapper {
+            position: relative;
+            width: 100%;
+            height: 400px;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 2px solid var(--border);
+            background: #e5e7eb;
+        }
+
+        #editMap {
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        .pegman-marker {
+            background: transparent;
+            border: none;
+        }
+
+        .coords-box {
+            display: flex;
+            gap: 20px;
+            margin-top: 14px;
+            flex-wrap: wrap;
+            background: #f8f6f0;
+            padding: 16px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            align-items: flex-end;
+        }
+
+            .coords-box .coord-group {
+                flex: 1;
+                min-width: 150px;
+            }
+
+                .coords-box .coord-group label {
+                    font-weight: 700;
+                    color: var(--dark);
+                    font-size: 0.9rem;
+                    display: block;
+                    margin-bottom: 4px;
+                }
+
+                .coords-box .coord-group input {
+                    width: 100%;
+                    direction: ltr;
+                    text-align: center;
+                    padding: 10px 12px;
+                    border: 2px solid var(--border);
+                    border-radius: 10px;
+                    font-family: "Tajawal", sans-serif;
+                    font-size: 0.95rem;
+                    background: var(--white);
+                    color: var(--dark);
+                    transition: all 0.25s;
+                }
+
+                    .coords-box .coord-group input:focus {
+                        outline: none;
+                        border-color: #192e43;
+                        box-shadow: 0 0 0 2px rgb(215 219 232);
+                    }
+
+            .coords-box .btn-reset {
+                padding: 10px 20px;
+                background: var(--dark);
+                color: var(--gold);
+                border: 2px solid var(--gold);
+                border-radius: 10px;
+                font-weight: 700;
+                cursor: pointer;
+                font-family: "Tajawal", sans-serif;
+                font-size: 0.9rem;
+                transition: all 0.3s ease;
+                display: inline-flex;
+                align-items: center;
+                gap: 7px;
+            }
+
+                .coords-box .btn-reset:hover {
+                    background: var(--gold);
+                    color: var(--dark);
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 20px rgba(212, 175, 55, 0.3);
+                }
+
+        /* ===== Amenities ===== */
+        .amenities-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 11px;
+        }
+
+        .amenity-item {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            padding: 13px 15px;
+            background: var(--bg-light);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--dark);
+            transition: all 0.3s ease;
+        }
+
+            .amenity-item:hover {
+                border-color: var(--gold);
+                background: var(--gold-light);
+            }
+
+            .amenity-item input[type="checkbox"] {
+                width: 19px;
+                height: 19px;
+                accent-color: var(--gold);
+                cursor: pointer;
+            }
+
+            .amenity-item.checked {
+                border-color: var(--gold);
+                background: var(--gold-light);
+            }
+
+        /* ===== Popups ===== */
+        .success-popup,
+        .error-popup {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 18px 35px;
+            border-radius: 14px;
+            font-weight: 700;
+            font-size: 1.15rem;
+            z-index: 99999;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+            font-family: 'Tajawal', sans-serif;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            opacity: 1;
+            transition: opacity 0.5s ease;
+            direction: rtl;
+        }
+
+        .success-popup {
+            background: #22c55e;
+            color: #fff;
+        }
+
+            .success-popup i {
+                color: #fff;
+            }
+
+        .error-popup {
+            background: #dc3545;
+            color: #fff;
+        }
+
+            .error-popup i {
+                color: #fff;
+            }
+
+        /* ===== Responsive ===== */
+        @@media (max-width: 992px) {
+            .navbar .nav-links {
+                gap: 25px;
+            }
+
+            .navbar-right {
+                margin-right: 1cm;
+            }
+        }
+
+        @@media (max-width: 768px) {
+            .navbar {
+                flex-direction: column;
+                padding: 10px;
+            }
+
+                .navbar .logo {
+                    width: 50px;
+                }
+
+                .navbar .nav-links {
+                    gap: 12px;
+                }
+
+                    .navbar .nav-links a {
+                        font-size: 0.8rem;
+                    }
+
+            .container {
+                padding: 1rem;
+            }
+
+            .page-header {
+                flex-direction: column;
+                text-align: center;
+                padding: 20px;
+            }
+
+            .page-info {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .page-title h1 {
+                font-size: 1.4rem;
+            }
+
+            .card {
+                padding: 16px;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+
+            .form-actions {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .btn-group {
+                justify-content: center;
+            }
+
+            .btn {
+                padding: 10px 18px;
+                font-size: 0.9rem;
+                justify-content: center;
+            }
+
+            .amenities-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+                gap: 8px;
+            }
+
+            .amenity-item {
+                padding: 10px 12px;
+                font-size: 0.8rem;
+            }
+
+            .map-wrapper {
+                height: 300px;
+            }
+
+            .coords-box {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+                .coords-box .btn-reset {
+                    justify-content: center;
+                }
+
+            .navbar-right {
+                margin-right: 1cm;
+            }
+
+            .success-popup,
+            .error-popup {
+                padding: 14px 20px;
+                font-size: 0.95rem;
+                width: 90%;
+                text-align: center;
+                justify-content: center;
+            }
+        }
+
+        @@media (max-width: 480px) {
+            .navbar .nav-links {
+                gap: 8px;
+            }
+
+                .navbar .nav-links a {
+                    font-size: 0.7rem;
+                }
+
+            .container {
+                padding: 0.5rem;
+            }
+
+            .page-header {
+                padding: 15px;
+            }
+
+            .page-title h1 {
+                font-size: 1.2rem;
+            }
+
+            .card {
+                padding: 12px;
+            }
+
+            .form-control {
+                padding: 8px 10px;
+                font-size: 0.8rem;
+            }
+
+            .form-group label {
+                font-size: 0.85rem;
+            }
+
+            .btn {
+                padding: 8px 14px;
+                font-size: 0.8rem;
+            }
+
+            .amenities-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 6px;
+            }
+
+            .amenity-item {
+                padding: 8px 10px;
+                font-size: 0.7rem;
+            }
+
+            .map-wrapper {
+                height: 250px;
+            }
+
+            .coords-box .coord-group {
+                min-width: 100px;
+            }
+
+            .navbar-right {
+                margin-right: 0.5cm;
+            }
+
+            .success-popup,
+            .error-popup {
+                padding: 12px 16px;
+                font-size: 0.85rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ====== نافبار ====== -->
+    <nav class="navbar">
+        <img class="logo" src="/image/hero.png" alt="SYRELIS" />
+        <ul class="nav-links">
+           <li><a href="/Home/Index?skipRedirect=true"><span class="link_span">الرئيسية</span></a></li>
+            <li><a href="/Properties/Create">أعلن عن عقارك</a></li>
+            <li><a href="/Search/Index"><span class="link_span">ابحث عن عقارك</span></a></li>
+            <li><a href="@Url.Action("MyFavorites", "Properties")">محفوظاتي</a></li>
+           <li> <a href="/Home/Index?skipRedirect=true#contactSection" id="contactNavLink"> <span class="link_span">تواصل معنا</span>  </a></li>
+        </ul>
+        <div class="navbar-right">
+            @if (SignInManager.IsSignedIn(User))
+            {
+                var userName = User.Identity?.Name ?? "مستخدم";
+                var firstLetter = userName.Length > 0 ? userName[0].ToString().ToUpper() : "?";
+                <div class="user-avatar">
+                    @firstLetter
+                    <span class="tooltip">@userName</span>
+                </div>
+            }
+            else
+            {
+                <button class="login-btn-nav" id="openModalBtn">
+                    <i class="fas fa-sign-in-alt" style="margin-left: 6px;"></i> تسجيل الدخول
+                </button>
+            }
+        </div>
+    </nav>
+
+    <!-- ====== المحتوى ====== -->
+    <div class="container">
+
+        <!-- ====== Page Header ====== -->
+        <div class="page-header">
+            <div class="page-info">
+                <a href="/Properties/MyProperties" class="back-button">
+                    <i class="fas fa-arrow-right"></i>
+                </a>
+                <div class="page-title">
+                    <h1>تعديل العقار</h1>
+                    <p>قم بتحديث بيانات عقارك</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <div class="icon-circle"><i class="fa-solid fa-pen"></i></div>
+                تعديل العقار
+            </div>
+
+            @if (TempData["Success"] != null)
+            {
+                <div id="successPopup" class="success-popup">
+                    <i class="fa-solid fa-circle-check"></i>
+                    @TempData["Success"]
+                </div>
+                <script>
+                    setTimeout(function () {
+                        var popup = document.getElementById('successPopup');
+                        if (popup) {
+                            popup.style.opacity = '0';
+                            setTimeout(function () { popup.remove(); }, 500);
+                        }
+                    }, 3500);
+                </script>
+            }
+
+            @if (TempData["Error"] != null)
+            {
+                <div id="errorPopup" class="error-popup">
+                    <i class="fa-solid fa-circle-exclamation"></i>
+                    @TempData["Error"]
+                </div>
+                <script>
+                    setTimeout(function () {
+                        var popup = document.getElementById('errorPopup');
+                        if (popup) {
+                            popup.style.opacity = '0';
+                            setTimeout(function () { popup.remove(); }, 500);
+                        }
+                    }, 4000);
+                </script>
+            }
+
+            <form asp-action="Edit" method="post" enctype="multipart/form-data" id="editForm">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="Id" />
+                <input type="hidden" asp-for="PropertyNumber" />
+
+                <div class="form-grid">
+                    <!-- نوع العقار -->
+                    <div class="form-group">
+                        <label>نوع العقار <span class="req">*</span></label>
+                        <select asp-for="PropertyTypeId" class="form-control" required>
+                            <option value="">اختر النوع</option>
+                            @foreach (var type in Model.PropertyTypes)
+                            {
+                                <option value="@type.Id">@type.NameAr</option>
+                            }
+                        </select>
+                        <span class="field-hint">اختر نوع العقار المناسب</span>
+                        <span asp-validation-for="PropertyTypeId" class="error-message"></span>
+                    </div>
+
+                    <!-- طبيعة العقار -->
+                    <div class="form-group">
+                        <label>طبيعة العقار <span class="req">*</span></label>
+                        <select asp-for="Status" class="form-control" required>
+                            <option value="للبيع">للبيع</option>
+                        </select>
+                        <span class="field-hint">حالة العقار (للبيع فقط)</span>
+                        <span asp-validation-for="Status" class="error-message"></span>
+                    </div>
+
+                    <!-- السعر -->
+                    <div class="form-group">
+                        <label>السعر <span class="req">*</span></label>
+                        <input asp-for="Price" type="number" class="form-control" placeholder="أدخل السعر" required min="0" />
+                        <span class="field-hint">سعر العقار (يجب أن يكون أكبر من 0)</span>
+                        <span asp-validation-for="Price" class="error-message"></span>
+                    </div>
+
+                    <!-- العملة -->
+                    <div class="form-group">
+                        <label>العملة <span class="req">*</span></label>
+                        <select asp-for="PriceCurrency" class="form-control" required>
+                            <option value="USD">دولار أمريكي</option>
+                            <option value="SYP">ليرة سورية</option>
+                        </select>
+                        <span class="field-hint">اختر العملة المناسبة</span>
+                        <span asp-validation-for="PriceCurrency" class="error-message"></span>
+                    </div>
+
+                    <!-- العنوان -->
+                    <div class="form-group full">
+                        <label>عنوان العقار <span class="req">*</span></label>
+                        <input asp-for="Title" class="form-control" placeholder="اكتب عنواناً مناسباً للعقار..." required />
+                        <span class="field-hint">عنوان مختصر وجذاب يعكس هوية العقار</span>
+                        <span asp-validation-for="Title" class="error-message"></span>
+                    </div>
+
+                    <!-- الوصف -->
+                    <div class="form-group full">
+                        <label>الوصف المفصل</label>
+                        <textarea asp-for="Description" class="form-control" placeholder="اكتب وصفاً مفصلاً للعقار..." rows="4"></textarea>
+                        <span class="field-hint">تفاصيل إضافية عن العقار (اختياري)</span>
+                    </div>
+
+                    <!-- المدينة -->
+                    <div class="form-group">
+                        <label>المدينة <span class="req">*</span></label>
+                        <select asp-for="CityId" class="form-control" required>
+                            <option value="">اختر المدينة</option>
+                            @foreach (var city in Model.Cities)
+                            {
+                                <option value="@city.Id">@city.NameAr</option>
+                            }
+                        </select>
+                        <span class="field-hint">اختر المدينة التي يقع فيها العقار</span>
+                        <span asp-validation-for="CityId" class="error-message"></span>
+                    </div>
+
+                    <!-- الحي -->
+                    <div class="form-group">
+                        <label>الحي <span class="req">*</span></label>
+                        <input asp-for="Neighborhood" class="form-control" placeholder="اسم الحي" required />
+                        <span class="field-hint">اسم الحي الذي يقع فيه العقار</span>
+                        <span asp-validation-for="Neighborhood" class="error-message"></span>
+                    </div>
+
+                    <!-- الشارع -->
+                    <div class="form-group full">
+                        <label>الشارع</label>
+                        <input asp-for="Address" class="form-control" placeholder="اسم الشارع" />
+                        <span class="field-hint">اسم الشارع (اختياري)</span>
+                    </div>
+
+                    <!-- الموقع التفصيلي (غير مطلوب) -->
+                    <div class="form-group full">
+                        <label>الموقع التفصيلي</label>
+                        <textarea asp-for="DetailedLocation" class="form-control" placeholder="أدخل موقع العقار بالتفصيل..."></textarea>
+                        <span class="field-hint">وصف تفصيلي للموقع (اختياري)</span>
+                        <span asp-validation-for="DetailedLocation" class="error-message"></span>
+                    </div>
+
+                    <!-- المساحة -->
+                    <div class="form-group">
+                        <label>المساحة (م²) <span class="req">*</span></label>
+                        <input asp-for="Area" type="number" class="form-control" placeholder="المساحة" required min="1" />
+                        <span class="field-hint">مساحة العقار بالمتر المربع (يجب أن تكون أكبر من 0)</span>
+                        <span asp-validation-for="Area" class="error-message"></span>
+                    </div>
+
+                    <!-- عدد الغرف -->
+                    <div class="form-group">
+                        <label>عدد الغرف</label>
+                        <input asp-for="Rooms" type="number" class="form-control" placeholder="الغرف" min="0" />
+                        <span class="field-hint">عدد الغرف (اختياري)</span>
+                    </div>
+
+                    <!-- عدد الحمامات -->
+                    <div class="form-group">
+                        <label>عدد الحمامات</label>
+                        <input asp-for="Bathrooms" type="number" class="form-control" placeholder="الحمامات" min="0" />
+                        <span class="field-hint">عدد الحمامات (اختياري)</span>
+                    </div>
+
+                    <!-- رقم الطابق -->
+                    <div class="form-group">
+                        <label>رقم الطابق</label>
+                        <input asp-for="Floor" type="number" class="form-control" placeholder="رقم الطابق" min="-2" />
+                        <span class="field-hint">رقم الطابق (اختياري)</span>
+                    </div>
+
+                    <!-- متاح من -->
+                    <div class="form-group">
+                        <label>متاح من تاريخ <span class="req">*</span></label>
+                        <input asp-for="AvailableFrom" type="date" class="form-control" required />
+                        <span class="field-hint">التاريخ الذي يصبح فيه العقار متاحاً</span>
+                        <span asp-validation-for="AvailableFrom" class="error-message"></span>
+                    </div>
+
+                    <!-- رقم الاتصال -->
+                    <div class="form-group">
+                        <label>رقم الاتصال <span class="req">*</span></label>
+                        <input asp-for="AdvertiserPhone" type="tel" class="form-control" placeholder="09XXXXXXXX" required maxlength="10" />
+                        <span class="field-hint">رقم هاتف صالح للتواصل (يبدأ بـ 09)</span>
+                        <span asp-validation-for="AdvertiserPhone" class="error-message"></span>
+                    </div>
+
+                    <!-- المرافق -->
+                    <div class="form-group full">
+                        <label>المرافق</label>
+                        <div class="amenities-grid">
+                            @foreach (var feature in Model.Features)
+                            {
+                                <label class="amenity-item @(Model.FeatureIds.Contains(feature.Id) ? "checked" : "")">
+                                    <input type="checkbox" name="FeatureIds" value="@feature.Id" @(Model.FeatureIds.Contains(feature.Id) ? "checked" : "") onchange="this.parentElement.classList.toggle('checked')" />
+                                    <i class="fa-solid @(feature.IconClass ?? "fa-check")"></i> @feature.NameAr
+                                </label>
+                            }
+                        </div>
+                        <span class="field-hint">اختر المرافق المتوفرة في العقار (اختياري)</span>
+                    </div>
+
+                    <!-- ====== الموقع على الخريطة ====== -->
+                    <div class="form-group full">
+                        <label>تحديد الموقع على الخريطة <span class="req">*</span></label>
+                        <p style="font-size:0.85rem; color:var(--gray); margin-bottom:10px;">
+                            <i class="fa-solid fa-location-dot" style="color:var(--gold);"></i> اسحب الرجل الأصفر لتحديد الموقع
+                        </p>
+                        <div class="map-wrapper" id="editMapWrapper">
+                            <div id="editMap"></div>
+                        </div>
+
+                        <div class="coords-box">
+                            <div class="coord-group">
+                                <label><i class="fa-solid fa-location-dot" style="color:var(--gold);"></i> خط العرض</label>
+                                <input type="text" id="editLatDisplay" value="@Model.Latitude?.ToString("F6")" />
+                            </div>
+                            <div class="coord-group">
+                                <label><i class="fa-solid fa-location-dot" style="color:var(--gold);"></i> خط الطول</label>
+                                <input type="text" id="editLngDisplay" value="@Model.Longitude?.ToString("F6")" />
+                            </div>
+                            <div>
+                                <button type="button" class="btn-reset" onclick="resetEditLocation()">
+                                    <i class="fa-solid fa-rotate-right"></i> إعادة تعيين
+                                </button>
+                            </div>
+                        </div>
+
+                        <input type="hidden" asp-for="Latitude" id="editLat" />
+                        <input type="hidden" asp-for="Longitude" id="editLng" />
+                        <span class="field-hint">انقر على الخريطة واسحب الرجل الأصفر لتحديد الموقع</span>
+                    </div>
+                </div>
+
+                <!-- ====== أزرار ====== -->
+                <div class="form-actions">
+                    <div class="btn-group">
+                        <a href="/Properties/MyProperties" class="btn btn-secondary">
+                            <i class="fa-solid fa-arrow-right"></i> العودة
+                        </a>
+                    </div>
+                    <div class="btn-group">
+                        <button type="submit" class="btn btn-primary" id="saveBtn">
+                            <i class="fa-solid fa-save"></i> حفظ التغييرات
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+        // ====== حدود سوريا ======
+        const syriaPolygon = [
+            [32.7443468580001, 35.75759034900011],
+            [32.777948710000075, 35.78420292100009],
+            [32.82794565800005, 35.834225708000076],
+            [32.85357716900002, 35.841873820000046],
+            [32.86603118900011, 35.83804976400012],
+            [32.895822653, 35.8497286380001],
+            [32.920782369000065, 35.866885213000046],
+            [32.9223326620001, 35.874016561000076],
+            [32.944941101000055, 35.88807255000012],
+            [32.977729797000066, 35.86461145000004],
+            [32.99020965600003, 35.859030395000104],
+            [33.08542348200011, 35.84580122900013],
+            [33.0986784870001, 35.84890181500003],
+            [33.111907654, 35.81148807800008],
+            [33.12676462900005, 35.81148807800008],
+            [33.14156992600006, 35.82244348100005],
+            [33.16112945600007, 35.83339888500012],
+            [33.189990743000024, 35.83019494600006],
+            [33.20172129400002, 35.80766402200004],
+            [33.248462626, 35.80363326000014],
+            [33.264895732000085, 35.77562463400005],
+            [33.272698873000095, 35.76859663900012],
+            [33.312489726000095, 35.80208296700005],
+            [33.33440053300005, 35.76384240700014],
+            [33.34287546800006, 35.78575321500011],
+            [33.34992930200009, 35.79350467900008],
+            [33.36003204400002, 35.809937785000045],
+            [33.37336456300004, 35.812314901000036],
+            [33.378868104000034, 35.81541548700005],
+            [33.39519785600008, 35.8169657790001],
+            [33.40137319000006, 35.82244348100005],
+            [33.4067217, 35.8210998940001],
+            [33.418742463000044, 35.845116087000065],
+            [33.431242167000065, 35.870089152000105],
+            [33.44041473400007, 35.88848596200012],
+            [33.46235138000013, 35.91949182100012],
+            [33.4942615770001, 35.935408163000034],
+            [33.51457041400003, 35.921868937000056],
+            [33.52782542000001, 35.93323775200008],
+            [33.53420745800004, 35.95680220500009],
+            [33.53394907700009, 35.98026330600004],
+            [33.54126129200007, 35.999280233000036],
+            [33.55263010600005, 36.01984745300007],
+            [33.56779714000008, 36.03524702900006],
+            [33.58634897900002, 36.03845096800006],
+            [33.59764027900009, 36.02966597500006],
+            [33.608027242, 36.012922811000124],
+            [33.61570119200009, 35.99452600100011],
+            [33.61900848400008, 35.98026330600004],
+            [33.629938050000064, 35.956905558000074],
+            [33.633400371, 35.93478804500006],
+            [33.64029917400008, 35.9215588780001],
+            [33.66166737900009, 35.92538293400014],
+            [33.665078024000096, 35.92941369700014],
+            [33.66921213800005, 35.942436157000145],
+            [33.67308787100008, 35.94719038900007],
+            [33.682699687000095, 35.949877564000076],
+            [33.70083811400012, 35.9469836830001],
+            [33.70920969600009, 35.94843062300009],
+            [33.71812388100004, 35.95587203000014],
+            [33.732154032000025, 35.97416548700011],
+            [33.74354868600004, 35.98026330600004],
+            [33.760705262, 35.99400923600007],
+            [33.784295553, 36.027082154000084],
+            [33.80561208100009, 36.040518026000086],
+            [33.81643829400004, 36.05043990100012],
+            [33.82199351100006, 36.06645959400004],
+            [33.826050110000054, 36.085063111000125],
+            [33.83227712100005, 36.10242639100005],
+            [33.850622253000026, 36.13828983600007],
+            [33.84741831500004, 36.144904419000056],
+            [33.83405995700012, 36.15761682100015],
+            [33.82979665200007, 36.16567834500012],
+            [33.83021006300008, 36.18655562300012],
+            [33.83829742400006, 36.20267867000007],
+            [33.847754212000055, 36.21663130700006],
+            [33.85253428100005, 36.23182417800007],
+            [33.84974375400007, 36.2491874590001],
+            [33.82868560800007, 36.300553833000095],
+            [33.82119252600002, 36.33827762900012],
+            [33.82377634700002, 36.35750126200014],
+            [33.83700551400004, 36.369593547000136],
+            [33.8575468960001, 36.3676298420001],
+            [33.866409404000095, 36.35036991400011],
+            [33.87199045800013, 36.31109582500005],
+            [33.89111073800002, 36.28164025900014],
+            [33.89720855700007, 36.27533573400012],
+            [33.90676869800008, 36.26892785600006],
+            [33.91038604800006, 36.2671708580001],
+            [33.94650787400006, 36.288564901000086],
+            [33.96438791900003, 36.302310832000046],
+            [33.98051096600001, 36.31802046700011],
+            [34.00955312100011, 36.35781132000011],
+            [34.044718933000055, 36.39109094300005],
+            [34.05363311800009, 36.41217492700008],
+            [34.05280629500005, 36.423647095000035],
+            [34.04614003600004, 36.445144490000075],
+            [34.046708476, 36.45889042200008],
+            [34.05350392700005, 36.47522017400013],
+            [34.062754008000056, 36.480697876000136],
+            [34.074510397000054, 36.48266158000007],
+            [34.08864390100008, 36.488449341000035],
+            [34.10918528300009, 36.50798303200014],
+            [34.14099212700002, 36.552734823000094],
+            [34.17326405900009, 36.5758858640001],
+            [34.1991022750001, 36.604101196000045],
+            [34.20010086600003, 36.60355389100005],
+            [34.209850972000126, 36.59821008300014],
+            [34.229746399000035, 36.57402551200005],
+            [34.244138285000034, 36.567514282000104],
+            [34.26294850700005, 36.56276005100011],
+            [34.27586761500005, 36.57030480900005],
+            [34.286900533000065, 36.579916626000056],
+            [34.299897156, 36.581983683000146],
+            [34.30767445900001, 36.57681604000004],
+            [34.30896637000005, 36.57030480900005],
+            [34.30850128200002, 36.562966756000094],
+            [34.31108510400013, 36.55583540800012],
+            [34.32072275900005, 36.54519006300012],
+            [34.34588918100009, 36.52358931400005],
+            [34.353640645, 36.51862837700014],
+            [34.361650493000084, 36.51594120300007],
+            [34.36986704500002, 36.516768026000136],
+            [34.375060527000116, 36.51997196400009],
+            [34.37978892000011, 36.52358931400005],
+            [34.38668772400008, 36.5262764900001],
+            [34.40309499100003, 36.52979048700007],
+            [34.41417958600006, 36.53061730900009],
+            [34.42293874100004, 36.525139608000075],
+            [34.43242136700009, 36.50922326700004],
+            [34.43030263300004, 36.501885213000094],
+            [34.434255880000094, 36.49465051200008],
+            [34.44913869300005, 36.48018111100009],
+            [34.4552365120001, 36.46323124200006],
+            [34.464538269000045, 36.44979536900013],
+            [34.47745737700005, 36.43987349400004],
+            [34.49417470300007, 36.43346561700008],
+            [34.49432973300013, 36.43346561700008],
+            [34.49833465600001, 36.419719686000064],
+            [34.5001433310001, 36.392331177000074],
+            [34.499032288000095, 36.363082316000146],
+            [34.49417470300007, 36.34365197700009],
+            [34.4934770710001, 36.34096480300013],
+            [34.49329620400003, 36.338174276000075],
+            [34.4934770710001, 36.33538374800014],
+            [34.49417470300007, 36.332696574000124],
+            [34.49860331600003, 36.329851247000136],
+            [34.514121806, 36.319880818000115],
+            [34.52884959, 36.33662398200005],
+            [34.54109690400013, 36.364012492000086],
+            [34.553809306000076, 36.383546183000135],
+            [34.569518942000045, 36.388093709000145],
+            [34.58424672400007, 36.38685347500012],
+            [34.59623565700009, 36.3889205320001],
+            [34.603832092000076, 36.4036999920001],
+            [34.60031809500002, 36.41847945100011],
+            [34.593186747000075, 36.42912479600011],
+            [34.59783762600004, 36.43625614400014],
+            [34.62936025, 36.44018355300011],
+            [34.62290069700005, 36.41599898300012],
+            [34.62248728400006, 36.391194296000094],
+            [34.62920522100008, 36.367526489000056],
+            [34.64413971000003, 36.34737268000009],
+            [34.67948638900013, 36.323808228000075],
+            [34.68754791300002, 36.30892541500015],
+            [34.675558981000066, 36.288151489000086],
+            [34.667910868, 36.2848441970001],
+            [34.64832550100006, 36.28443078600009],
+            [34.63912709600005, 36.28071008300009],
+            [34.63096221900004, 36.27151167800008],
+            [34.62724151600004, 36.261589803000106],
+            [34.62445098900007, 36.201231730000075],
+            [34.62620798800005, 36.19513391100014],
+            [34.63349436500003, 36.183351684000115],
+            [34.63530304000004, 36.17828739400005],
+            [34.634062806000074, 36.17218957500006],
+            [34.62806833900005, 36.16020064300005],
+            [34.626931458000044, 36.15585982200014],
+            [34.62953226600003, 36.112139913000135],
+            [34.631013896000056, 36.08723352100009],
+            [34.62791331000001, 36.06077518800004],
+            [34.628430075000054, 36.03793420400012],
+            [34.633649394000074, 36.01623010300011],
+            [34.645379944000055, 35.99876346800005],
+            [34.648222148000045, 35.991425415000094],
+            [34.650237529, 35.98264042200009],
+            [34.649848955419216, 35.969899655243296],
+            [34.66844310100004, 35.96566816500007],
+            [34.69953034100007, 35.94743899800005],
+            [34.726223049000055, 35.94092858200008],
+            [34.74095286700009, 35.93116295700008],
+            [34.74982330900008, 35.92896569100009],
+            [34.790716864000046, 35.92896569100009],
+            [34.796942450000074, 35.92603600400008],
+            [34.82176341400009, 35.90845787900008],
+            [34.83177317900004, 35.90455162900008],
+            [34.852769273000035, 35.899099155000044],
+            [34.92422109600005, 35.86687259200005],
+            [34.92690664300005, 35.87289472700007],
+            [34.931626695000034, 35.87354576900009],
+            [34.93805573100008, 35.879567905000044],
+            [34.944973049000055, 35.88135826900009],
+            [34.95189036700009, 35.879567905000044],
+            [34.958319403000075, 35.87354576900009],
+            [34.96515534100007, 35.87354576900009],
+            [34.96954987200007, 35.87859134200005],
+            [34.97016022300005, 35.878916863000086],
+            [34.97166575700004, 35.87663821700005],
+            [34.97882721600007, 35.87354576900009],
+            [34.99286530200004, 35.881602410000085],
+            [35.00018952000005, 35.887380405000044],
+            [35.00678131700005, 35.89535566500007],
+            [35.021918036000045, 35.90056399800005],
+            [35.03656647300005, 35.89730879000007],
+            [35.04995351800005, 35.89144941500007],
+            [35.06134674700007, 35.88786868600005],
+            [35.10919830900008, 35.88786868600005],
+            [35.121079820000034, 35.89421634200005],
+            [35.180568752000056, 35.94125410200007],
+            [35.19794342700004, 35.96241295700008],
+            [35.22479889500005, 35.95329837300005],
+            [35.28790924700007, 35.91529381600009],
+            [35.321478583000044, 35.92896569100009],
+            [35.33852773600006, 35.92408287900008],
+            [35.40330638200004, 35.916677280000044],
+            [35.417669989000046, 35.918955925000034],
+            [35.42572663000004, 35.908864780000044],
+            [35.47907135600008, 35.86060631600009],
+            [35.48737213700008, 35.84009850400008],
+            [35.493475653000075, 35.830088738000086],
+            [35.50332265800006, 35.82585696700005],
+            [35.50893789300005, 35.818369988000086],
+            [35.50690338700008, 35.80225670700008],
+            [35.50218333500004, 35.78679446700005],
+            [35.49957916900007, 35.781260613000086],
+            [35.50421784100007, 35.770518425000034],
+            [35.51544830900008, 35.77198326900009],
+            [35.52912018400008, 35.77711022200009],
+            [35.54116445500006, 35.778086785000085],
+            [35.54633209800005, 35.77198326900009],
+            [35.56167226800005, 35.737071160000085],
+            [35.56659577000005, 35.73878014400009],
+            [35.57648346600007, 35.740896030000044],
+            [35.582098700000074, 35.74333743600005],
+            [35.582098700000074, 35.737071160000085],
+            [35.57591380400004, 35.723399285000085],
+            [35.582098700000074, 35.723399285000085],
+            [35.587958075000074, 35.74341881600009],
+            [35.59829336100006, 35.76335696700005],
+            [35.61273834800005, 35.77849368600005],
+            [35.630560614000046, 35.78435306100005],
+            [35.64175039300005, 35.78207441500007],
+            [35.655462958000044, 35.77320397200009],
+            [35.66779205900008, 35.77116946700005],
+            [35.675116278000075, 35.77662194100009],
+            [35.68146393400008, 35.80005944100009],
+            [35.74209219000005, 35.838552280000044],
+            [35.74746328300006, 35.84034264400009],
+            [35.770819403000075, 35.84009850400008],
+            [35.78998444200005, 35.835948113000086],
+            [35.81346263200004, 35.82536868600005],
+            [35.83539459800005, 35.81185957100007],
+            [35.849676825000074, 35.79859459700009],
+            [35.84723541900007, 35.84685306100005],
+            [35.85179271000004, 35.86087022200009],
+            [35.86668528900009, 35.88103274800005],
+            [35.885972398000035, 35.88526451900009],
+            [35.9177504327608, 35.911305418925394],
+            [35.91512156200007, 35.92083540900012],
+            [35.91837717700004, 35.94057580600014],
+            [35.92437164300007, 35.96072961500005],
+            [35.92685211200005, 35.98026330600004],
+            [35.91527659100011, 35.992769002000045],
+            [35.9023574830001, 35.99307906000013],
+            [35.889283346000056, 35.990081828000086],
+            [35.8773460900001, 35.992355591000035],
+            [35.86918121400008, 36.0039311110001],
+            [35.86618398100008, 36.01943404100007],
+            [35.865408834000064, 36.050749959000086],
+            [35.85419504800011, 36.08030887900014],
+            [35.81977854500006, 36.13849654100005],
+            [35.8222320440001, 36.15530755700013],
+            [35.82256907200012, 36.15761682100015],
+            [35.85207631500005, 36.16877893100008],
+            [35.92266632100011, 36.174876749000134],
+            [35.95170847600009, 36.1968909090001],
+            [35.96116526300007, 36.22903365100012],
+            [35.95563588500006, 36.25311486800007],
+            [35.95873647100011, 36.269031209000104],
+            [35.99403147400001, 36.2774027910001],
+            [35.99418650400004, 36.277506144000085],
+            [36.00074941100003, 36.29734989400009],
+            [35.98824371300013, 36.33672733500009],
+            [35.9939797980001, 36.35801802600008],
+            [36.022401835000025, 36.355537557000105],
+            [36.16699249300008, 36.358638143000064],
+            [36.181668600000094, 36.36049849400007],
+            [36.18921335800003, 36.366286255000034],
+            [36.19587961900005, 36.37445113100006],
+            [36.204509583000075, 36.37579471900011],
+            [36.21815216, 36.36142867000012],
+            [36.227608948000054, 36.373004191000064],
+            [36.21546498600007, 36.3856132410001],
+            [36.2082302860001, 36.39811893700005],
+            [36.20445790700008, 36.41186486800012],
+            [36.20140899700006, 36.43925337700006],
+            [36.19991038000005, 36.44524784300006],
+            [36.19991038000005, 36.45072554500007],
+            [36.20311432000001, 36.45920048000005],
+            [36.20879872600007, 36.463954712000145],
+            [36.2159300740001, 36.46529829900004],
+            [36.222389628000045, 36.46891564900011],
+            [36.22554189100002, 36.48018111100009],
+            [36.22786733100004, 36.498577922000095],
+            [36.21835886700005, 36.574438925000095],
+            [36.218100485, 36.593455851000044],
+            [36.22900421100006, 36.664252563000105],
+            [36.237324117000114, 36.67004032400007],
+            [36.259855042000126, 36.66911014800013],
+            [36.27401438400007, 36.665492798000116],
+            [36.29049916600006, 36.65846480300013],
+            [36.30571856100006, 36.64876116200014],
+            [36.30589874300004, 36.64864628100014],
+            [36.3168024700001, 36.637070761000075],
+            [36.32202179000002, 36.62074100700005],
+            [36.32481231700008, 36.58777144400011],
+            [36.33287384100008, 36.57764286300005],
+            [36.33308054700002, 36.58219038900006],
+            [36.342123922000084, 36.58777144400011],
+            [36.357110087000066, 36.594282674000056],
+            [36.36594675700006, 36.59448938000014],
+            [36.3734915160001, 36.593352498000115],
+            [36.380364482000076, 36.59056197100006],
+            [36.387030742, 36.585704386000145],
+            [36.38987294500005, 36.58084680200011],
+            [36.39560903000002, 36.56503381400012],
+            [36.400621643000065, 36.55800581900013],
+            [36.40816640300004, 36.552734823000094],
+            [36.462478333, 36.53382124800004],
+            [36.47901479100007, 36.531237427000065],
+            [36.49400095600005, 36.53547489400012],
+            [36.532499899000115, 36.565343872000085],
+            [36.57570139600004, 36.56999475100008],
+            [36.62014312700002, 36.569271281000056],
+            [36.662414449000025, 36.58281050700003],
+            [36.685823873000075, 36.594696085000066],
+            [36.7054609180001, 36.59810673000004],
+            [36.72478790300006, 36.59893355300005],
+            [36.74695709300006, 36.60327437400014],
+            [36.7665941370001, 36.6156767170001],
+            [36.78431915300003, 36.632006469000146],
+            [36.803646139000065, 36.64327193200006],
+            [36.828089091000024, 36.63986128800008],
+            [36.82855417900005, 36.64916304600007],
+            [36.82752065100006, 36.65856815600006],
+            [36.827243022000104, 36.65956262500009],
+            [36.77584421800013, 36.84367313700005],
+            [36.772588603000045, 36.9068217360001],
+            [36.76897125300006, 36.92594201700007],
+            [36.76266672800004, 36.94588912000012],
+            [36.75383005800005, 36.96469934100014],
+            [36.74225453700011, 36.980098918000124],
+            [36.71951690700003, 37.010588012000085],
+            [36.70664947500002, 37.01844283100013],
+            [36.685823873000075, 37.01947635900012],
+            [36.65373280900006, 37.01079471800006],
+            [36.64226064100002, 37.014515422000045],
+            [36.628721415000044, 37.03332564300007],
+            [36.619936422000066, 37.05306604000015],
+            [36.62210683200006, 37.06236779800014],
+            [36.63151194300009, 37.07011926300004],
+            [36.64417266900004, 37.08562219300006],
+            [36.6509939570001, 37.10443241400009],
+            [36.64990875300002, 37.120968872000105],
+            [36.64587799100012, 37.13740197700014],
+            [36.64391428700007, 37.15610884600005],
+            [36.657143453000074, 37.219670858000086],
+            [36.65859039300007, 37.24189172400014],
+            [36.63445750000001, 37.40446578000012],
+            [36.63419911700005, 37.44611698400013],
+            [36.71052520800008, 37.59339481600006],
+            [36.73212595700004, 37.654062948000046],
+            [36.76054799400008, 37.819737589000056],
+            [36.81966583300003, 37.98003788200009],
+            [36.82576365100009, 38.00794315600007],
+            [36.83500562500005, 38.026005169000086],
+            [36.88462310800007, 38.12297489400004],
+            [36.90552622500006, 38.19005090300004],
+            [36.90839426700005, 38.22426070200004],
+            [36.9017021690001, 38.28988977000006],
+            [36.85573598200004, 38.47995568900012],
+            [36.833721822000044, 38.52935835800014],
+            [36.744039459000064, 38.635191663000114],
+            [36.71951690700003, 38.66413049400006],
+            [36.69393707300007, 38.7250053300001],
+            [36.686650696000086, 38.79538863100004],
+            [36.692903545, 38.95796268700008],
+            [36.698174540000124, 38.97997684800009],
+            [36.70117177400003, 39.032170044000054],
+            [36.65952056900004, 39.18585575300011],
+            [36.661277567000084, 39.23959924300004],
+            [36.69237269400004, 39.441707633000135],
+            [36.742151184000065, 39.76525191300004],
+            [36.80695343100008, 39.97981246000006],
+            [36.854857483, 40.07923791500008],
+            [36.864727682000066, 40.115204712000036],
+            [36.870360413000114, 40.152721802000144],
+            [36.88441640300003, 40.190135539000096],
+            [36.9227846830001, 40.261409006000065],
+            [36.99402211500011, 40.3937406820001],
+            [37.004021505000125, 40.413894491000065],
+            [37.01061025000011, 40.435185180000076],
+            [37.014124247000055, 40.45699263500012],
+            [37.01515777600004, 40.4798336180001],
+            [37.02588063600005, 40.52572229000009],
+            [37.085256857, 40.65946089700009],
+            [37.10047556600004, 40.70896691900009],
+            [37.12269643200007, 40.89644901500009],
+            [37.08424916600002, 41.13509078000004],
+            [37.06962473600005, 41.179739217000076],
+            [36.96497385700008, 41.201339966000035],
+            [37.07556752600006, 41.47977258300011],
+            [37.15428342000003, 41.89636506700003],
+            [37.175613099000046, 42.00924930900004],
+            [37.19664540600006, 42.052967570000135],
+            [37.25328277600006, 42.12831180900008],
+            [37.306302795000065, 42.17854130000006],
+            [37.31322743700004, 42.193010701000105],
+            [37.324906311000106, 42.21120080500003],
+            [37.313950908000024, 42.222569621000105],
+            [37.302375387, 42.22380985500007],
+            [37.292401835000064, 42.222156209000104],
+            [37.288138530000126, 42.22318973800009],
+            [37.2863040160001, 42.23683231600012],
+            [37.27452179000004, 42.26721805900007],
+            [37.276743877000015, 42.27290246500007],
+            [37.28227325500002, 42.27920699100008],
+            [37.28656239900009, 42.285821574000124],
+            [37.28506378200008, 42.2920227460001],
+            [37.27968943300003, 42.29636356600008],
+            [37.26992258700007, 42.301427856000146],
+            [37.26454823900009, 42.30576867700012],
+            [37.24263743100006, 42.33987512200008],
+            [37.239769389000074, 42.34669641200014],
+            [37.2270311490001, 42.353207642000086],
+            [37.17116892500003, 42.33532759600007],
+            [37.158430685000084, 42.34669641200014],
+            [37.15241038100005, 42.354551229000094],
+            [37.13827687600009, 42.35651493400013],
+            [37.1099840290001, 42.35723840300011],
+            [37.098150127000096, 42.36364628100006],
+            [37.08794403100002, 42.3711910400001],
+            [37.07675608300009, 42.376875448000135],
+            [37.06223500600005, 42.377185506000046],
+            [37.06200061900006, 42.376805724000064],
+            [37.0429080200001, 42.34586958800014],
+            [36.994125468000036, 42.28189416500004],
+            [36.99402211500011, 42.28189416500004],
+            [36.99397043900008, 42.28158410700007],
+            [36.90531952000002, 42.17843794800012],
+            [36.73362457300006, 41.97855350700013],
+            [36.6178693640001, 41.84378137300007],
+            [36.599730937000075, 41.81732303900009],
+            [36.58929229700003, 41.789934530000096],
+            [36.5361172490001, 41.47977258300011],
+            [36.52738393200012, 41.41486698400007],
+            [36.51637685100003, 41.38541141700006],
+            [36.49415598600008, 41.365360962000125],
+            [36.49405263300007, 41.365360962000125],
+            [36.49400095600005, 41.36525760900008],
+            [36.493897603000036, 41.36525760900008],
+            [36.35478464800012, 41.27699426200007],
+            [36.32796458000003, 41.268829387000096],
+            [36.07702382400005, 41.23658329300014],
+            [36.06033233700002, 41.236686645000134],
+            [36.043020732000016, 41.240614054000105],
+            [35.994289856000066, 41.26624556500008],
+            [35.99434153200009, 41.26634891800012],
+            [35.99423818000007, 41.26634891800012],
+            [35.85765737000004, 41.34365686100011],
+            [35.82556630400002, 41.35450891100004],
+            [35.79275177100003, 41.359263143000135],
+            [35.65524078400004, 41.363500610000074],
+            [35.62392486600005, 41.35802290900011],
+            [35.593694153000044, 41.34220992100012],
+            [35.55224762500008, 41.30845783400008],
+            [35.494320374000026, 41.26128462700012],
+            [35.49416534400008, 41.26128462700012],
+            [35.49416534400008, 41.26118127400008],
+            [35.49416534400008, 41.261077921000094],
+            [35.46408966100002, 41.25187951700008],
+            [35.366524557, 41.24309452300008],
+            [35.243017884000054, 41.201339966000035],
+            [35.18214304600009, 41.1915214440001],
+            [35.15890443700006, 41.19232585700013],
+            [34.994040833, 41.198032674000046],
+            [34.81932281500012, 41.20650760900014],
+            [34.79312286400001, 41.204233846000136],
+            [34.76847320600011, 41.19565555800011],
+            [34.49432973300013, 41.02398645100004],
+            [34.49417470300007, 41.02398645100004],
+            [34.42851979600003, 40.988019653000094],
+            [34.401854757000095, 40.9652820230001],
+            [34.3860676070001, 40.93603316300005],
+            [34.33149729400007, 40.690466756000035],
+            [34.25798757000011, 40.54380904100009],
+            [34.202538757000056, 40.43322147600014],
+            [34.14716746, 40.32263391100008],
+            [34.09179616300004, 40.212046346000136],
+            [34.07228291700004, 40.17311082500004],
+            [34.03637318900009, 40.101458781000076],
+            [33.98097605400004, 39.99087121600007],
+            [33.9256047570001, 39.88038700300012],
+            [33.87023346000005, 39.76969608500008],
+            [33.8148104860001, 39.65921187400005],
+            [33.759490865000075, 39.548624308000115],
+            [33.70409373000011, 39.438036743000055],
+            [33.64872243200007, 39.32744917800011],
+            [33.59332529700002, 39.21686161300005],
+            [33.53792816100007, 39.1062740480001],
+            [33.482479350000105, 38.99568648300004],
+            [33.427108053000055, 38.8850989180001],
+            [33.3716850790001, 38.77451135200005],
+            [33.244250997000066, 38.52956506300012],
+            [33.13118006300009, 38.31574206300013],
+            [33.08630198200005, 38.23087528500014],
+            [32.99434377000007, 38.056725708000045],
+            [32.925329896, 37.92939497900005],
+            [32.8325190230001, 37.75803592900007],
+            [32.73983734200003, 37.586676880000084],
+            [32.690055623, 37.49460567400013],
+            [32.647129822000025, 37.41521447800005],
+            [32.55439646400002, 37.244062134000046],
+            [32.49458099400009, 37.13337121600006],
+            [32.49452931800006, 37.133164510000086],
+            [32.4100383510001, 36.980098918000124],
+            [32.31678822900007, 36.819385213000146],
+            [32.31304168700005, 36.80656945800007],
+            [32.313532614000096, 36.79251346800004],
+            [32.32779530900005, 36.72864139800009],
+            [32.328337911000105, 36.70693729600009],
+            [32.319656271000056, 36.68957401500006],
+            [32.34285898800006, 36.65350386500006],
+            [32.357014182000015, 36.51668392700009],
+            [32.360790711000035, 36.48018111100009],
+            [32.36939483700006, 36.463954712000145],
+            [32.374226583000066, 36.40762740000008],
+            [32.37931671200006, 36.387887004000106],
+            [32.386422221000075, 36.373107544000106],
+            [32.45693471300005, 36.2852576090001],
+            [32.49458099400009, 36.22076542100007],
+            [32.522279561000104, 36.18820926900014],
+            [32.52731801400007, 36.17735721800011],
+            [32.52592275000008, 36.17218957500006],
+            [32.51721527100004, 36.16082076000009],
+            [32.51519989100008, 36.15585982200014],
+            [32.51613006700005, 36.149865356000134],
+            [32.51954071000007, 36.139530070000035],
+            [32.52010915100003, 36.13322554600012],
+            [32.51587168400006, 36.096225220000065],
+            [32.51626477300009, 36.081905549000055],
+            [32.51659515400006, 36.06987023900007],
+            [32.517318624000055, 36.06625288900011],
+            [32.52160776800012, 36.06604618300014],
+            [32.53326080300009, 36.060465128000146],
+            [32.59116424600002, 36.0154032800001],
+            [32.60790741000007, 35.99816900012],
+            [32.62669179300006, 35.99754699],
+            [32.6437191780001, 35.99827193200007],
+            [32.65508799200008, 35.995621053000074],
+            [32.656612448000104, 35.98026330600004],
+            [32.6543645230001, 35.96579390500011],
+            [32.65743927100003, 35.955355265000094],
+            [32.66444142700003, 35.94657027200009],
+            [32.67400156700002, 35.937475219000135],
+            [32.673536479000106, 35.941195922000134],
+            [32.67761891700012, 35.94439986200007],
+            [32.68410431000008, 35.94574344900008],
+            [32.690770569000094, 35.94419315600004],
+            [32.69250172900006, 35.94036910000011],
+            [32.69237253900012, 35.927449992000106],
+            [32.693767802000096, 35.92248905400004],
+            [32.70857310000012, 35.90522912600005],
+            [32.71327565600011, 35.89572066300008],
+            [32.73441131700004, 35.78823368400009],
+            [32.74428151400012, 35.779035278000094],
+            [32.74451405800009, 35.77913863100008],
+            [32.74727874800003, 35.77490116400014],
+            [32.74805389400005, 35.769733520000045],
+            [32.74696869000006, 35.76384240700014],
+            [32.7443468580001, 35.75759034900011]
+        ];
+
+        // ====== التحقق من الحدود ======
+        function isInsideSyria(lat, lng) {
+            let inside = false;
+            for (let i = 0, j = syriaPolygon.length - 1; i < syriaPolygon.length; j = i++) {
+                const xi = syriaPolygon[i][1];
+                const yi = syriaPolygon[i][0];
+                const xj = syriaPolygon[j][1];
+                const yj = syriaPolygon[j][0];
+                const intersect = ((yi > lat) !== (yj > lat)) && (lng < (xj - xi) * (lat - yi) / (yj - yi) + xi);
+                if (intersect) inside = !inside;
+            }
+            return inside;
+        }
+
+        // ====== متغيرات الخريطة ======
+        var editMap, editMarker;
+        var defaultLat = @Model.Latitude?.ToString("F6") ?? 33.5138;
+        var defaultLng = @Model.Longitude?.ToString("F6") ?? 36.2765;
+
+        // ====== تهيئة الخريطة ======
+        function initEditMap() {
+            if (editMap) {
+                editMap.remove();
+                editMap = null;
+            }
+
+            var mapContainer = document.getElementById('editMap');
+            if (!mapContainer) return;
+
+            editMap = L.map('editMap', {
+                zoomControl: true,
+                dragging: true,
+                minZoom: 8,
+                maxZoom: 19
+            }).setView([defaultLat, defaultLng], 15);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '© OpenStreetMap'
+            }).addTo(editMap);
+
+            var pegmanSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 23 38" width="44" height="44">
+                        <path d="M16.6 38.1h-5.5l-.2-2.9-.2 2.9H5.2L5 25.3l-.8 2a1.53 1.53 0 01-1.9.9l-1.2-.4a1.58 1.58 0 01-1-1.9v-.1c.3-.9 3.1-11.2 3.1-11.2a2.66 2.66 0 012.3-2l.6-.5a6.93 6.93 0 014.7-12 6.8 6.8 0 014.9 2 7 7 0 012 4.9 6.65 6.65 0 01-2.2 5l.7.5a2.78 2.78 0 012.4 2s2.9 11.2 2.9 11.3a1.53 1.53 0 01-.9 1.9l-1.3.4a1.63 1.63 0 01-1.9-.9l-.7-1.8z" fill="#333" opacity=".7"/>
+                        <path d="m5.9 13.6 1.1-.9h7.8l1.2.9" fill="#ce592c"/>
+                        <ellipse cx="10.9" cy="13.1" rx="2.7" ry=".3" fill="#ce592c" opacity=".5"/>
+                        <path d="m20.6 26.1-2.9-11.3a1.71 1.71 0 00-1.6-1.2H5.7a1.69 1.69 0 00-1.5 1.3L1.1 26.2a.61.61 0 00.3.7l1.1.4a.61.61 0 00.7-.3l2.7-6.7.2 16.8h3.6l.6-9.3a.47.47 0 01.44-.5h.06c.4 0 .4.2.5.5l.6 9.3h3.6l.2-16.8 2.5 6.6a.52.52 0 00.66.31l1.2-.4a.57.57 0 00.5-.7Z" fill="#fdbf2d"/>
+                        <circle cx="10.9" cy="7" r="5.9" fill="#fdbf2d"/>
+                    </svg>`;
+
+            var pegmanIcon = L.divIcon({
+                className: 'pegman-marker',
+                html: pegmanSVG,
+                iconSize: [44, 44],
+                iconAnchor: [22, 42]
+            });
+
+            // التحقق من أن الموقع داخل سوريا
+            if (!isInsideSyria(defaultLat, defaultLng)) {
+                defaultLat = 33.5138;
+                defaultLng = 36.2765;
+                if (defaultLat !== @Model.Latitude?.ToString("F6")) {
+                    document.getElementById('editLatDisplay').value = defaultLat.toFixed(6);
+                    document.getElementById('editLngDisplay').value = defaultLng.toFixed(6);
+                    document.getElementById('editLat').value = defaultLat;
+                    document.getElementById('editLng').value = defaultLng;
+                }
+            }
+
+            editMarker = L.marker([defaultLat, defaultLng], {
+                icon: pegmanIcon,
+                draggable: true
+            }).addTo(editMap);
+
+            editMarker.on('dragend', function (e) {
+                var pos = e.target.getLatLng();
+                if (!isInsideSyria(pos.lat, pos.lng)) {
+                    showEditMapError("⚠️ لا يمكن وضع العلامة خارج سوريا!");
+                    e.target.setLatLng([defaultLat, defaultLng]);
+                    return;
+                }
+                updateEditCoords(pos.lat, pos.lng);
+            });
+
+            editMap.on('click', function (e) {
+                var pos = e.latlng;
+                if (!isInsideSyria(pos.lat, pos.lng)) {
+                    showEditMapError("⚠️ لا يمكن تحديد موقع خارج سوريا!");
+                    return;
+                }
+                if (editMarker) {
+                    editMap.removeLayer(editMarker);
+                }
+                editMarker = L.marker([pos.lat, pos.lng], {
+                    icon: pegmanIcon,
+                    draggable: true
+                }).addTo(editMap);
+                updateEditCoords(pos.lat, pos.lng);
+                editMarker.on('dragend', function (ev) {
+                    var newPos = ev.target.getLatLng();
+                    if (!isInsideSyria(newPos.lat, newPos.lng)) {
+                        showEditMapError("⚠️ لا يمكن وضع العلامة خارج سوريا!");
+                        ev.target.setLatLng([pos.lat, pos.lng]);
+                        return;
+                    }
+                    updateEditCoords(newPos.lat, newPos.lng);
+                });
+            });
+
+            setTimeout(function () {
+                editMap.invalidateSize();
+            }, 500);
+        }
+
+        function showEditMapError(msg) {
+            var errorDiv = document.createElement('div');
+            errorDiv.style.cssText = 'position:absolute; top:10px; left:50%; transform:translateX(-50%); background:#dc3545; color:#fff; padding:10px 25px; border-radius:8px; z-index:999; font-weight:700; font-size:0.9rem; font-family:"Tajawal",sans-serif; direction:rtl; box-shadow:0 4px 20px rgba(0,0,0,0.3);';
+            errorDiv.textContent = msg;
+            var wrapper = document.getElementById('editMapWrapper');
+            wrapper.appendChild(errorDiv);
+            setTimeout(function () { errorDiv.remove(); }, 3000);
+        }
+
+        // ====== تحديث الإحداثيات ======
+        function updateEditCoords(lat, lng) {
+            document.getElementById('editLatDisplay').value = lat.toFixed(6);
+            document.getElementById('editLngDisplay').value = lng.toFixed(6);
+            document.getElementById('editLat').value = lat;
+            document.getElementById('editLng').value = lng;
+        }
+
+        // ====== إعادة تعيين الموقع ======
+        function resetEditLocation() {
+            if (editMarker && editMap) {
+                editMap.removeLayer(editMarker);
+            }
+            var pegmanSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 23 38" width="44" height="44">
+                        <path d="M16.6 38.1h-5.5l-.2-2.9-.2 2.9H5.2L5 25.3l-.8 2a1.53 1.53 0 01-1.9.9l-1.2-.4a1.58 1.58 0 01-1-1.9v-.1c.3-.9 3.1-11.2 3.1-11.2a2.66 2.66 0 012.3-2l.6-.5a6.93 6.93 0 014.7-12 6.8 6.8 0 014.9 2 7 7 0 012 4.9 6.65 6.65 0 01-2.2 5l.7.5a2.78 2.78 0 012.4 2s2.9 11.2 2.9 11.3a1.53 1.53 0 01-.9 1.9l-1.3.4a1.63 1.63 0 01-1.9-.9l-.7-1.8z" fill="#333" opacity=".7"/>
+                        <path d="m5.9 13.6 1.1-.9h7.8l1.2.9" fill="#ce592c"/>
+                        <ellipse cx="10.9" cy="13.1" rx="2.7" ry=".3" fill="#ce592c" opacity=".5"/>
+                        <path d="m20.6 26.1-2.9-11.3a1.71 1.71 0 00-1.6-1.2H5.7a1.69 1.69 0 00-1.5 1.3L1.1 26.2a.61.61 0 00.3.7l1.1.4a.61.61 0 00.7-.3l2.7-6.7.2 16.8h3.6l.6-9.3a.47.47 0 01.44-.5h.06c.4 0 .4.2.5.5l.6 9.3h3.6l.2-16.8 2.5 6.6a.52.52 0 00.66.31l1.2-.4a.57.57 0 00.5-.7Z" fill="#fdbf2d"/>
+                        <circle cx="10.9" cy="7" r="5.9" fill="#fdbf2d"/>
+                    </svg>`;
+
+            var pegmanIcon = L.divIcon({
+                className: 'pegman-marker',
+                html: pegmanSVG,
+                iconSize: [44, 44],
+                iconAnchor: [22, 42]
+            });
+
+            var center = editMap.getCenter();
+            editMarker = L.marker([center.lat, center.lng], {
+                icon: pegmanIcon,
+                draggable: true
+            }).addTo(editMap);
+            updateEditCoords(center.lat, center.lng);
+            editMarker.on('dragend', function (e) {
+                var pos = e.target.getLatLng();
+                if (!isInsideSyria(pos.lat, pos.lng)) {
+                    showEditMapError("⚠️ لا يمكن وضع العلامة خارج سوريا!");
+                    e.target.setLatLng([center.lat, center.lng]);
+                    return;
+                }
+                updateEditCoords(pos.lat, pos.lng);
+            });
+        }
+
+        // ====== تشغيل الخريطة عند تحميل الصفحة ======
+        document.addEventListener('DOMContentLoaded', function () {
+            setTimeout(initEditMap, 500);
+        });
+
+        // ====== التحقق من صحة النموذج ======
+        document.getElementById('editForm').addEventListener('submit', function (e) {
+            var required = this.querySelectorAll('[required]');
+            var isValid = true;
+            var firstError = null;
+
+            required.forEach(function (field) {
+                var errorDiv = field.parentElement.querySelector('.error-message');
+                var hint = field.parentElement.querySelector('.field-hint');
+
+                // التحقق الخاص بالسعر
+                if (field.id === 'Price' || field.name === 'Price') {
+                    var val = parseFloat(field.value);
+                    if (isNaN(val) || val <= 0) {
+                        field.classList.add('error');
+                        if (errorDiv) {
+                            errorDiv.textContent = '⚠️ السعر يجب أن يكون أكبر من 0';
+                            errorDiv.style.display = 'block';
+                        }
+                        if (hint) hint.style.color = '#dc3545';
+                        isValid = false;
+                        if (!firstError) firstError = field;
+                        return;
+                    } else {
+                        field.classList.remove('error');
+                        if (errorDiv) errorDiv.style.display = 'none';
+                        if (hint) hint.style.color = 'var(--gray)';
+                    }
+                }
+
+                // التحقق الخاص بالمساحة
+                else if (field.id === 'Area' || field.name === 'Area') {
+                    var val = parseFloat(field.value);
+                    if (isNaN(val) || val <= 0) {
+                        field.classList.add('error');
+                        if (errorDiv) {
+                            errorDiv.textContent = '⚠️ المساحة يجب أن تكون أكبر من 0';
+                            errorDiv.style.display = 'block';
+                        }
+                        if (hint) hint.style.color = '#dc3545';
+                        isValid = false;
+                        if (!firstError) firstError = field;
+                        return;
+                    } else {
+                        field.classList.remove('error');
+                        if (errorDiv) errorDiv.style.display = 'none';
+                        if (hint) hint.style.color = 'var(--gray)';
+                    }
+                }
+
+                // التحقق الخاص برقم المحضر
+                else if (field.id === 'PropertyNumber' || field.name === 'PropertyNumber') {
+                    var val = parseInt(field.value);
+                    if (isNaN(val) || val <= 0) {
+                        field.classList.add('error');
+                        if (errorDiv) {
+                            errorDiv.textContent = '⚠️ رقم المحضر يجب أن يكون أكبر من 0';
+                            errorDiv.style.display = 'block';
+                        }
+                        if (hint) hint.style.color = '#dc3545';
+                        isValid = false;
+                        if (!firstError) firstError = field;
+                        return;
+                    } else {
+                        field.classList.remove('error');
+                        if (errorDiv) errorDiv.style.display = 'none';
+                        if (hint) hint.style.color = 'var(--gray)';
+                    }
+                }
+
+                // التحقق العام
+                else {
+                    if (!field.value || field.value === '') {
+                        field.classList.add('error');
+                        if (errorDiv) {
+                            errorDiv.textContent = '⚠️ هذا الحقل مطلوب';
+                            errorDiv.style.display = 'block';
+                        }
+                        if (hint) hint.style.color = '#dc3545';
+                        isValid = false;
+                        if (!firstError) firstError = field;
+                    } else {
+                        field.classList.remove('error');
+                        if (errorDiv) errorDiv.style.display = 'none';
+                        if (hint) hint.style.color = 'var(--gray)';
+                    }
+                }
+            });
+
+            if (!isValid) {
+                e.preventDefault();
+                var errorPopup = document.createElement('div');
+                errorPopup.className = 'error-popup';
+                errorPopup.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> ⚠️ الرجاء تعبئة جميع الحقول المطلوبة بشكل صحيح';
+                document.body.appendChild(errorPopup);
+                setTimeout(function () {
+                    errorPopup.style.opacity = '0';
+                    setTimeout(function () { errorPopup.remove(); }, 500);
+                }, 3000);
+
+                if (firstError) {
+                    firstError.focus();
+                    firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
+        });
+
+        // ====== تفعيل وإلغاء تفعيل المرافق ======
+        document.querySelectorAll('.amenity-item input[type="checkbox"]').forEach(function (cb) {
+            cb.addEventListener('change', function () {
+                this.parentElement.classList.toggle('checked');
+            });
+        });
+    </script>
+
+</body>
+</html>

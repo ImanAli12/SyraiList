@@ -1,0 +1,652 @@
+﻿@model RealEstateWebApp.Models.PropertyRequest
+@using RealEstateWebApp.Models
+@using Microsoft.AspNetCore.Identity
+@inject SignInManager<ApplicationUser> SignInManager
+@{
+    ViewData["Title"] = "اطلب عقار";
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>اطلب عقار | SYRELIS</title>
+
+    <!-- ====== جميع CDN ====== -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+    <style>
+        :root {
+            --dark: #192e43;
+            --gold: #d4af37;
+            --gray: #51596a;
+            --white: #ffffff;
+            --gold-light: #f4e5c2;
+            --gold-dark: #917005;
+            --border: #e8e4dc;
+            --bg-light: #f8f9fa;
+            --shadow: 0 4px 16px rgba(11, 19, 32, 0.08);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(126deg, rgba(11, 19, 32, 0.85), rgb(11 19 32 / 62%)), url(https://images.unsplash.com/photo-1600585154526-990dced4db0d?q=80&w=2070&auto=format);
+            background-position: center;
+            background-attachment: fixed;
+            font-family: "Tajawal", sans-serif;
+            color: var(--gold);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .navbar {
+            background: rgba(11, 19, 32, 0.96);
+            padding: 0 1rem;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.4);
+            justify-content: space-between;
+            box-shadow: 0px 15px 30px -10px rgb(23, 22, 70);
+            position: sticky;
+            top: 0;
+            z-index: 2000;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+            .navbar .logo {
+                width: 82px;
+                margin: 8px 0;
+                flex-shrink: 0;
+            }
+
+            .navbar .nav-links {
+                display: flex;
+                gap: 30px;
+                list-style: none;
+                flex-wrap: wrap;
+                justify-content: center;
+                padding: 0;
+                margin: 0;
+                align-items: center;
+                flex: 1;
+            }
+
+                .navbar .nav-links a {
+                    color: #f2efea;
+                    text-decoration: none;
+                    font-weight: 600;
+                    font-size: 0.95rem;
+                    transition: 0.3s;
+                    white-space: nowrap;
+                }
+
+                    .navbar .nav-links a:hover {
+                        color: #d4af37;
+                    }
+
+        .navbar-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-left: auto;
+        }
+
+        .user-avatar {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #d4af37, #b8941f);
+            color: #0b1320;
+            font-weight: 800;
+            font-size: 1.1rem;
+            font-family: 'Tajawal', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid rgba(212, 175, 55, 0.4);
+            box-shadow: 0 2px 10px rgba(212, 175, 55, 0.2);
+            text-decoration: none;
+            user-select: none;
+            position: relative;
+        }
+
+            .user-avatar:hover {
+                transform: scale(1.08);
+                box-shadow: 0 4px 20px rgba(212, 175, 55, 0.4);
+                border-color: #d4af37;
+            }
+
+            .user-avatar .tooltip {
+                position: absolute;
+                top: 110%;
+                left: 50%;
+                transform: translateX(-50%);
+                background: #0b1320;
+                color: #d4af37;
+                padding: 6px 14px;
+                border-radius: 8px;
+                font-size: 0.75rem;
+                font-weight: 600;
+                white-space: nowrap;
+                opacity: 0;
+                visibility: hidden;
+                transition: all 0.3s ease;
+                border: 1px solid rgba(212, 175, 55, 0.2);
+                pointer-events: none;
+                font-family: 'Tajawal', sans-serif;
+            }
+
+            .user-avatar:hover .tooltip {
+                opacity: 1;
+                visibility: visible;
+                top: 120%;
+            }
+
+            .user-avatar .tooltip::before {
+                content: '';
+                position: absolute;
+                bottom: 100%;
+                left: 50%;
+                transform: translateX(-50%);
+                border: 6px solid transparent;
+                border-bottom-color: #0b1320;
+            }
+
+        .login-btn-nav {
+            background: transparent;
+            border: 1.5px dashed #d4af37;
+            color: #d4af37;
+            padding: 10px 22px;
+            border-radius: 40px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            font-family: 'Tajawal', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+            .login-btn-nav:hover {
+                background: #d4af37;
+                border: 1px solid rgb(50, 39, 11);
+                color: #0b1320;
+                transform: translateY(-2px);
+                box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+            }
+
+        .page-header {
+            padding: 30px 35px;
+            margin-bottom: 49px;
+            box-shadow: 0 8px 24px rgba(11, 19, 32, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 20px;
+            width: 100%;
+            border-bottom: 2px solid #e2bd46;
+        }
+
+        .back-button {
+            width: 57px;
+            height: 54px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 12px 25px;
+            background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+            border: 2px solid var(--white);
+            border-radius: 12px;
+            color: var(--dark);
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            font-family: "Tajawal", sans-serif;
+        }
+
+        .page-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .page-title h1 {
+            color: #e2bd46 !important;
+            margin: 0;
+            font-size: 2rem;
+            font-weight: 800;
+        }
+
+        .page-title p {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1rem;
+            margin: 5px 0 0 0;
+        }
+
+        .card {
+            max-width: 100%;
+            background: var(--white);
+            border-radius: 20px;
+            padding: 28px;
+            margin-top: 30px;
+            margin-bottom: 61px;
+        }
+
+        .card-header {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--dark);
+            margin-bottom: 22px;
+            padding-bottom: 14px;
+            border-bottom: 2px solid var(--bg-light);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+            .card-header .icon-circle {
+                width: 40px;
+                height: 40px;
+                background: #192e43;
+                border-radius: 16px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: #ffd754;
+                font-size: 1.2rem;
+            }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+        }
+
+            .form-group.full {
+                grid-column: 1 / -1;
+            }
+
+            .form-group label {
+                font-weight: 500;
+                color: var(--dark);
+                font-size: 1rem;
+            }
+
+                .form-group label .req {
+                    font-weight: 800;
+                    color: #b20011;
+                    font-size: 1.3rem;
+                }
+
+        .form-control {
+            padding: 12px 15px;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            font-family: "Tajawal", sans-serif;
+            font-size: 0.95rem;
+            background: var(--white);
+            color: var(--dark);
+            transition: all 0.25s;
+        }
+
+            .form-control:focus {
+                outline: none;
+                border-color: #192e43;
+                box-shadow: 0 0 0 2px rgb(215 219 232);
+            }
+
+        select.form-control {
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23333' stroke-width='2'><polyline points='6 9 12 15 18 9'/></svg>");
+            background-repeat: no-repeat;
+            background-position: left 12px center;
+            padding: 10px 12px 10px 35px;
+            background-color: white;
+            cursor: pointer;
+        }
+
+        .btn {
+            padding: 12px 26px;
+            border: none;
+            border-radius: 10px;
+            font-family: "Tajawal", sans-serif;
+            font-size: 0.98rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: var(--dark);
+            color: #ffffff;
+            box-shadow: -1px 2px 9px rgb(11 19 32 / 73%);
+        }
+
+            .btn-primary:hover {
+                background: #ffffff;
+                color: #1a3250;
+            }
+
+        .form-actions {
+            display: flex !important;
+            justify-content: flex-end;
+            padding-top: 23px !important;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 11px;
+        }
+
+        .error-message {
+            color: #e5192c;
+            font-size: 0.95rem;
+            margin-top: 4px;
+            display: none;
+        }
+
+        .form-control.error {
+            border-color: #dc3545 !important;
+        }
+
+        .success-msg {
+            background: rgba(34, 197, 94, 0.15);
+            border: 1px solid #22c55e;
+            color: #22c55e;
+            padding: 12px 20px;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        @@media (max-width: 768px) {
+            .navbar {
+                flex-direction: column;
+                padding: 10px;
+            }
+
+                .navbar .nav-links {
+                    gap: 12px;
+                }
+
+                    .navbar .nav-links a {
+                        font-size: 0.8rem;
+                    }
+
+            .container {
+                padding: 1rem;
+            }
+
+            .page-header {
+                flex-direction: column;
+                text-align: center;
+                padding: 20px;
+            }
+
+            .page-title h1 {
+                font-size: 1.4rem;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .card {
+                padding: 16px;
+            }
+
+            .form-actions {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .btn-group {
+                justify-content: center;
+            }
+
+            .user-avatar {
+                width: 36px;
+                height: 36px;
+                font-size: 0.9rem;
+            }
+
+            .login-btn-nav {
+                padding: 8px 16px;
+                font-size: 0.75rem;
+            }
+
+            .navbar-right {
+                gap: 10px;
+                margin-left: 0;
+            }
+        }
+
+        @@media (max-width: 480px) {
+            .navbar .nav-links {
+                gap: 8px;
+            }
+
+                .navbar .nav-links a {
+                    font-size: 0.7rem;
+                }
+
+            .container {
+                padding: 0.5rem;
+            }
+
+            .page-header {
+                padding: 15px;
+            }
+
+            .page-title h1 {
+                font-size: 1.2rem;
+            }
+
+            .card {
+                padding: 12px;
+            }
+
+            .form-control {
+                padding: 8px 10px;
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ========== نافبار ========== -->
+    <nav class="navbar">
+        <img class="logo" src="/image/hero.png" alt="SYRELIS" />
+        <ul class="nav-links">
+           <li><a href="/Home/Index?skipRedirect=true"><span class="link_span">الرئيسية</span></a></li>
+            <li><a href="/Properties/Create"><span class="link_span">أعلن عن عقارك</span></a></li>
+            <li><a href="/Search/Index"><span class="link_span">ابحث عن عقارك</span></a></li>
+            <li><a href="@Url.Action("MyFavorites", "Properties")"><span class="link_span">محفوظاتي</span></a></li>
+           <li> <a href="/Home/Index?skipRedirect=true#contactSection" id="contactNavLink"> <span class="link_span">تواصل معنا</span>  </a></li>
+        </ul>
+        <div class="navbar-right">
+            @if (SignInManager.IsSignedIn(User))
+            {
+                var userName = User.Identity?.Name ?? "مستخدم";
+                var firstLetter = userName.Length > 0 ? userName[0].ToString().ToUpper() : "?";
+                <div class="user-avatar">
+                    @firstLetter
+                    <span class="tooltip">@userName</span>
+                </div>
+            }
+            else
+            {
+                <button class="login-btn-nav" id="openModalBtn">
+                    <i class="fas fa-sign-in-alt" style="margin-left: 6px;"></i> تسجيل الدخول
+                </button>
+            }
+        </div>
+    </nav>
+
+    <div class="container">
+        <partial name="_Tabs" />
+
+        <div class="page-header">
+            <div class="page-info">
+                <a href="/" class="back-button"><i class="fas fa-arrow-right"></i></a>
+                <div class="page-title">
+                    <h1>اطلب عقار</h1>
+                    <p>انشر طلبك وسيتواصل معك المعلنون المناسبون</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <div class="icon-circle"><i class="fas fa-home"></i></div>
+                تفاصيل الطلب
+            </div>
+
+            @if (TempData["Success"] != null)
+            {
+                <div class="success-msg">
+                    <i class="fa-solid fa-check-circle"></i> @TempData["Success"]
+                </div>
+            }
+
+            <form asp-action="Create" method="post">
+                @Html.AntiForgeryToken()
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>عنوان الطلب <span class="req">*</span></label>
+                        <input asp-for="Title" class="form-control" placeholder="مثال: أبحث عن شقة في دمشق" required />
+                        <span asp-validation-for="Title" class="error-message"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>نوع العقار <span class="req">*</span></label>
+                        <select asp-for="PropertyTypeId" class="form-control" required>
+                            <option value="">اختر النوع</option>
+                            @foreach (var type in ViewBag.PropertyTypes)
+                            {
+                                <option value="@type.Id">@type.NameAr</option>
+                            }
+                        </select>
+                        <span asp-validation-for="PropertyTypeId" class="error-message"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>طبيعة الطلب <span class="req">*</span></label>
+                        <select asp-for="Status" class="form-control" required>
+                            <option value="">اختر</option>
+                            <option value="شراء">شراء</option>
+                            <option value="إيجار">إيجار</option>
+                        </select>
+                        <span asp-validation-for="Status" class="error-message"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>المدينة <span class="req">*</span></label>
+                        <select asp-for="CityId" class="form-control" required>
+                            <option value="">اختر المدينة</option>
+                            @foreach (var city in ViewBag.Cities)
+                            {
+                                <option value="@city.Id">@city.NameAr</option>
+                            }
+                        </select>
+                        <span asp-validation-for="CityId" class="error-message"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>الحي / المنطقة</label>
+                        <input asp-for="Neighborhood" class="form-control" placeholder="اسم الحي" />
+                    </div>
+
+                    <div class="form-group">
+                        <label>الحد الأدنى للسعر</label>
+                        <input asp-for="MinPrice" type="number" class="form-control" placeholder="0" min="0" />
+                    </div>
+
+                    <div class="form-group">
+                        <label>الحد الأعلى للسعر</label>
+                        <input asp-for="MaxPrice" type="number" class="form-control" placeholder="0" min="0" />
+                    </div>
+
+                    <div class="form-group">
+                        <label>الحد الأدنى للمساحة (م²)</label>
+                        <input asp-for="MinArea" type="number" class="form-control" placeholder="0" min="0" />
+                    </div>
+
+                    <div class="form-group">
+                        <label>الحد الأعلى للمساحة (م²)</label>
+                        <input asp-for="MaxArea" type="number" class="form-control" placeholder="0" min="0" />
+                    </div>
+
+                    <div class="form-group">
+                        <label>الحد الأدنى للغرف</label>
+                        <input asp-for="MinRooms" type="number" class="form-control" placeholder="0" min="0" />
+                    </div>
+
+                    <div class="form-group">
+                        <label>الحد الأعلى للغرف</label>
+                        <input asp-for="MaxRooms" type="number" class="form-control" placeholder="0" min="0" />
+                    </div>
+
+                    <div class="form-group">
+                        <label>رقم الهاتف للتواصل <span class="req">*</span></label>
+                        <input asp-for="PhoneNumber" type="tel" class="form-control" placeholder="09XXXXXXXX" required maxlength="10" />
+                        <span asp-validation-for="PhoneNumber" class="error-message"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>البريد الإلكتروني <span class="req">*</span></label>
+                        <input asp-for="Email" type="email" class="form-control" placeholder="example@email.com" required />
+                        <span asp-validation-for="Email" class="error-message"></span>
+                    </div>
+
+                    <div class="form-group full">
+                        <label>تفاصيل إضافية</label>
+                        <textarea asp-for="Description" class="form-control" rows="4" placeholder="اكتب تفاصيل إضافية عن طلبك..."></textarea>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <div class="btn-group">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fa-solid fa-paper-plane"></i> نشر الطلب
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,1009 @@
+﻿@model List<RealEstateWebApp.Models.Property>
+@using RealEstateWebApp.Models
+@using Microsoft.AspNetCore.Identity
+@inject SignInManager<ApplicationUser> SignInManager
+@{
+    ViewData["Title"] = "عقارات " + ViewBag.CityName;
+    Layout = null;
+}
+
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>عقارات للبيع | @ViewBag.CityName</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <style>
+        /* ===== كل التنسيقات ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --dark: #0b1320;
+            --gold: #d4af37;
+            --gold-light: #f4e5c2;
+            --gold-dark: #b8941f;
+            --gray: #353a44;
+            --white: #ffffff;
+        }
+
+        body {
+            background: linear-gradient(126deg, rgba(11,19,32,0.92), rgba(11,19,32,0.72)), url(https://images.unsplash.com/photo-1600585154526-990dced4db0d?q=80&w=2070&auto=format);
+            background-position: center;
+            background-attachment: fixed;
+            min-height: 100vh;
+            font-family: "Tajawal", sans-serif;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* ===== NAV ===== */
+        .navbar {
+            background: rgba(11,19,32,0.96);
+            padding: 0 1rem;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid rgba(212,175,55,0.4);
+            justify-content: space-evenly;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            flex-wrap: wrap;
+            gap: 10px;
+            box-shadow: 0px 15px 30px -10px rgb(23,22,70);
+        }
+
+        .logo {
+            width: 6%;
+            margin-top: 8px;
+            margin-bottom: 8px;
+            min-width: 50px;
+            flex-shrink: 0;
+        }
+
+        .nav-links {
+            padding: 0 18rem;
+            display: flex;
+            gap: 70px;
+            list-style: none;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+            .nav-links a {
+                color: #f2efea;
+                text-decoration: none;
+                font-weight: 600;
+                font-size: 1rem;
+                transition: 0.3s;
+                white-space: nowrap;
+            }
+
+                .nav-links a:hover {
+                    color: #d4af37;
+                }
+
+        .login-btn-nav {
+            background: transparent;
+            border: 1.5px dashed #d4af37;
+            color: #d4af37;
+            padding: 13px 9px;
+            border-radius: 40px;
+            font-weight: 700;
+            font-size: 0.8rem;
+            font-family: "Tajawal", sans-serif;
+            cursor: pointer;
+            transition: all 0.3s;
+            flex-shrink: 0;
+        }
+
+            .login-btn-nav:hover {
+                background: #d4af37;
+                border: 1px solid rgb(50,39,11);
+                color: #0b1320;
+            }
+
+        /* ===== HEADER ===== */
+        .province-header {
+            padding: 30px 35px;
+            margin-top: 33px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 24px rgba(11,19,32,0.15);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 20px;
+            width: 100%;
+            border-bottom: 2px solid var(--gold);
+        }
+
+        .province-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .province-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            color: #bc9a2d;
+            border: 3px solid #cac3bc;
+        }
+
+        .province-title h1 {
+            color: #d4af37 !important;
+        }
+
+        .province-title p {
+            color: rgba(255,255,255,0.8);
+            font-size: 1rem;
+        }
+
+        /* ===== FILTER BUTTONS ===== */
+        .filter-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            justify-content: center;
+            margin: 20px 0 30px 0;
+        }
+
+        .filter-btn {
+            background: rgba(11,19,32,0.7);
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(212,175,55,0.3);
+            color: #e0d6c1;
+            padding: 12px 32px;
+            border-radius: 60px;
+            font-weight: 700;
+            font-size: 1rem;
+            font-family: "Tajawal", sans-serif;
+            cursor: pointer;
+            transition: all 0.25s;
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+            .filter-btn i {
+                color: var(--gold);
+                font-size: 1.1rem;
+            }
+
+            .filter-btn:hover {
+                background: rgba(212,175,55,0.15);
+                border-color: var(--gold);
+                transform: translateY(-2px);
+            }
+
+            .filter-btn.active {
+                background: var(--gold);
+                color: #0b1320;
+                border-color: var(--gold);
+                box-shadow: 0 0 20px rgba(212,175,55,0.3);
+            }
+
+                .filter-btn.active i {
+                    color: #0b1320;
+                }
+
+        /* ===== SECTIONS ===== */
+        .section-wrapper {
+            margin-bottom: 50px;
+            padding: 10px 0;
+            border-radius: 20px;
+            background: rgba(11,19,32,0.25);
+            backdrop-filter: blur(2px);
+            box-shadow: 0 4px 30px rgba(0,0,0,0.2);
+            border: 1px solid rgba(212,175,55,0.15);
+            transition: border-color 0.3s, opacity 0.4s, transform 0.3s;
+            display: none;
+        }
+
+            .section-wrapper.visible {
+                display: block;
+            }
+
+            .section-wrapper:hover {
+                border-color: rgba(212,175,55,0.5);
+            }
+
+        .section-title {
+            color: #d4af37;
+            font-size: 1.9rem;
+            font-weight: 800;
+            padding: 10px 30px 10px 20px;
+            margin: 0 0 20px 0;
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            border-bottom: 3px solid rgba(212,175,55,0.25);
+            background: linear-gradient(90deg, rgba(212,175,55,0.08), transparent);
+            border-radius: 12px 12px 0 0;
+        }
+
+            .section-title i {
+                font-size: 2rem;
+                color: var(--gold);
+                text-shadow: 0 0 15px rgba(212,175,55,0.3);
+            }
+
+            .section-title .badge-category {
+                background: var(--gold);
+                color: var(--dark);
+                font-size: 0.9rem;
+                padding: 3px 18px;
+                border-radius: 40px;
+                font-weight: 700;
+                margin-right: auto;
+                box-shadow: 0 0 20px rgba(212,175,55,0.2);
+            }
+
+        .section-sub {
+            color: rgba(255,255,255,0.6);
+            font-size: 0.95rem;
+            font-weight: 400;
+            padding: 0 30px 10px 20px;
+            margin-top: -8px;
+            border-bottom: 1px dashed rgba(212,175,55,0.15);
+        }
+
+        .properties-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+            gap: 25px;
+            padding: 10px 20px 20px 20px;
+        }
+
+        /* ===== CARD ===== */
+        .property-card {
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0px 0px 0px 0.7px rgb(24 35 55 / 56%), 0px 1px 20px -5px rgb(2,29,76);
+            transition: transform 0.4s cubic-bezier(0.4,0,0.2,1), box-shadow 0.4s ease;
+            background: #e8e8e8;
+        }
+
+            .property-card:hover {
+                transform: translateY(-3px);
+            }
+
+        .property-image {
+            position: relative;
+            height: 260px;
+            overflow: hidden;
+        }
+
+            .property-image img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                transition: transform 0.6s ease;
+            }
+
+        .property-card:hover .property-image img {
+            transform: scale(1.05);
+        }
+
+        .overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(11,19,32,0.525);
+            transition: opacity 0.5s ease;
+            z-index: 1;
+        }
+
+        .property-card:hover .overlay {
+            opacity: 0;
+        }
+
+        .property-content {
+            padding: 20px 22px 15px;
+            background: #e8e8e8;
+        }
+
+        .property-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1e2f4f;
+            margin-bottom: 6px;
+        }
+
+        .property-price {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid rgba(212,175,55,0.3);
+        }
+
+        .price-original {
+            font-size: 15px;
+            font-weight: 700;
+            color: #4949497a;
+        }
+
+        .property-location {
+            display: flex;
+            align-items: center;
+            margin-bottom: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #4949497a;
+        }
+
+            .property-location i {
+                margin-left: 10px;
+                color: #b29023;
+            }
+
+        .property-type {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #663939;
+        }
+
+            .property-type i {
+                margin-left: 10px;
+                color: var(--gold);
+            }
+
+        .property-meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 13px;
+            font-weight: 500;
+            color: #4949497a;
+        }
+
+            .property-meta span {
+                display: flex;
+                align-items: center;
+            }
+
+            .property-meta i {
+                margin-left: 8px;
+                color: var(--gold);
+            }
+
+        .property-footer {
+            background: linear-gradient(135deg, var(--dark) 0%, #1a253a 100%);
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: var(--white);
+            border-top: 3px solid var(--gold);
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .footer-features {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .footer-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            color: #a0aec0;
+            font-size: 0.85rem;
+        }
+
+            .footer-item i {
+                color: var(--gold);
+            }
+
+        .btn-more {
+            background: var(--dark);
+            color: var(--gold);
+            border: 2px solid var(--gold);
+            padding: 6px 16px;
+            border-radius: 25px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.3s;
+            font-size: 0.8rem;
+            font-family: "Tajawal", sans-serif;
+        }
+
+            .btn-more:hover {
+                background: var(--gold);
+                color: var(--dark);
+            }
+
+        .btn-favorite {
+            background: linear-gradient(207deg, #0d2243, #3d6c9a73);
+            color: #d7d8d9;
+            border: 1px solid #ffffff;
+            padding: 6px 14px;
+            border-radius: 30px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-family: "Tajawal", sans-serif;
+        }
+
+            .btn-favorite:hover {
+                background: #d4af37;
+                color: #0b1320;
+                transform: translateY(-2px);
+            }
+
+            .btn-favorite.added {
+                background: #d4af37;
+                color: #172c48;
+            }
+
+        .badge {
+            position: absolute;
+            padding: 6px 22px;
+            font-size: 13px;
+            font-weight: 700;
+            z-index: 3;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.968);
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            min-width: max-content;
+        }
+
+        .badge-for-sale {
+            clip-path: polygon(15% 0%, 100% 0%, 100% 100%, 15% 100%, 0% 50%);
+            top: 15px;
+            right: 0px;
+            background: #059669;
+            color: var(--white);
+            border: 2px solid rgba(255,255,255,0.2);
+        }
+
+            .badge-for-sale::before {
+                content: "\f29d";
+                font-family: "Font Awesome 6 Free";
+                font-weight: 900;
+            }
+
+        /* ===== RESPONSIVE ===== */
+        @@media screen and (max-width: 1200px) {
+            .nav-links {
+                padding: 0 8rem;
+                gap: 40px;
+            }
+        }
+
+        @@media screen and (max-width: 992px) {
+            .navbar {
+                justify-content: center;
+                padding: 10px 15px;
+            }
+
+            .nav-links {
+                padding: 0 2rem;
+                gap: 25px;
+            }
+
+            .properties-grid {
+                grid-template-columns: repeat(auto-fill, minmax(280px,1fr));
+            }
+        }
+
+        @@media screen and (max-width: 768px) {
+            .navbar {
+                flex-direction: column;
+                padding: 10px;
+            }
+
+            .logo {
+                width: 50px;
+            }
+
+            .nav-links {
+                padding: 0;
+                gap: 12px;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+                .nav-links a {
+                    font-size: 0.8rem;
+                }
+
+            .properties-grid {
+                grid-template-columns: 1fr;
+                padding: 10px;
+            }
+
+            .province-header {
+                flex-direction: column;
+                text-align: center;
+                padding: 15px 20px;
+            }
+
+            .province-info {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .section-title {
+                font-size: 1.4rem;
+                padding: 8px 16px;
+                flex-wrap: wrap;
+            }
+
+                .section-title .badge-category {
+                    font-size: 0.7rem;
+                    padding: 2px 12px;
+                    margin-right: 0;
+                }
+
+            .section-wrapper {
+                padding: 5px 0;
+            }
+
+            .filter-btn {
+                padding: 8px 20px;
+                font-size: 0.9rem;
+            }
+        }
+
+        @@media screen and (max-width: 480px) {
+            .nav-links a {
+                font-size: 0.7rem;
+            }
+
+            .property-title {
+                font-size: 17px;
+            }
+
+            .property-image {
+                height: 200px;
+            }
+        }
+
+        /* ===== TOAST ===== */
+        .toast {
+            position: fixed;
+            bottom: 50%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #f3f8ff;
+            color: #042347;
+            padding: 12px 28px;
+            border-radius: 40px;
+            font-weight: 800;
+            z-index: 999999;
+            font-family: "Tajawal", sans-serif;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+        }
+    </style>
+</head>
+<body>
+    <!-- NAV -->
+    <nav class="navbar">
+        <img class="logo" src="/image/hero.png" alt="SYRELIS" />
+        <ul class="nav-links">
+            <li><a href="/Home/Index">الرئيسية</a></li>
+            <li><a href="/Properties/Create">أعلن عن عقارك</a></li>
+            <li><a href="/Search/Index">ابحث عن عقارك</a></li>
+            <li><a href="@Url.Action("MyFavorites", "Properties")">محفوظاتي</a></li>
+            <li> <a href="/Home/Index?skipRedirect=true#contactSection" id="contactNavLink"> <span class="link_span">تواصل معنا</span>  </a></li>
+        </ul>
+        <div class="navbar-right">
+            @if (SignInManager.IsSignedIn(User))
+            {
+                var userName = User.Identity?.Name ?? "مستخدم";
+                var firstLetter = userName.Length > 0 ? userName[0].ToString().ToUpper() : "?";
+                <div class="user-avatar" style="display:inline-flex; align-items:center; justify-content:center; width:42px; height:42px; border-radius:50%; background:linear-gradient(135deg,#d4af37,#b8941f); color:#0b1320; font-weight:800; font-size:1.1rem; font-family:'Tajawal',sans-serif; cursor:pointer; border:2px solid rgba(212,175,55,0.4); box-shadow:0 2px 10px rgba(212,175,55,0.2); position:relative;">
+                    @firstLetter
+                    <span class="tooltip" style="position:absolute; top:110%; left:50%; transform:translateX(-50%); background:#0b1320; color:#d4af37; padding:6px 14px; border-radius:8px; font-size:0.75rem; font-weight:600; white-space:nowrap; opacity:0; visibility:hidden; transition:all 0.3s; border:1px solid rgba(212,175,55,0.2); pointer-events:none; font-family:'Tajawal',sans-serif;">@userName</span>
+                </div>
+            }
+            else
+            {
+                <button class="login-btn-nav" id="openModalBtn"><i class="fas fa-sign-in-alt" style="margin-left:6px;"></i> تسجيل الدخول</button>
+            }
+        </div>
+    </nav>
+
+    <!-- MAIN -->
+    <div class="container">
+        <div class="province-header">
+            <div class="province-info">
+                <div class="province-icon"><i class="fas fa-map-marked-alt"></i></div>
+                <div class="province-title">
+                    <h1>محافظة @ViewBag.CityName</h1>
+                    <p>عقارات مميزة للبيع</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- أزرار التصفية -->
+        <div class="filter-bar">
+            <button class="filter-btn active" data-filter="economy">
+                <i class="fas fa-coins"></i> اقتصادية
+            </button>
+            <button class="filter-btn" data-filter="middle">
+                <i class="fas fa-chart-line"></i> متوسطة
+            </button>
+            <button class="filter-btn" data-filter="luxury">
+                <i class="fas fa-crown"></i> فاخرة
+            </button>
+        </div>
+
+        <!-- ================================================================
+        ✅ التعديل المطلوب: الفلل تذهب إلى فاخرة حصراً، وباقي العقارات حسب K-Means
+        ================================================================ -->
+        @{
+            // 1️⃣ الفلل: تذهب إلى فاخرة حصراً (نتجاوز K-Means)
+            var villas = Model
+            .Where(p => p.PropertyType != null && p.PropertyType.NameAr.Contains("فيلا"))
+            .ToList();
+
+            // 2️⃣ باقي العقارات (شقق، مكاتب، أراضي، إلخ) توزع حسب K-Means
+            var nonVillas = Model
+            .Where(p => p.PropertyType == null || !p.PropertyType.NameAr.Contains("فيلا"))
+            .ToList();
+
+            // توزيع باقي العقارات حسب K-Means
+            var economyProps = nonVillas.Where(p => p.ClusterId == 0).ToList();
+            var middleProps = nonVillas.Where(p => p.ClusterId == 1).ToList();
+
+            // ✅ الفئات الفاخرة = (الفلل حصراً) + (باقي العقارات التي صنفتها K-Means كـ 2)
+            var luxuryProps = villas
+            .Concat(nonVillas.Where(p => p.ClusterId == 2))
+            .ToList();
+        }
+
+        <!-- الأقسام الثلاثة -->
+        <div class="section-wrapper visible" id="economySection">
+            <div class="section-title">
+                <i class="fas fa-coins"></i> عقارات اقتصادية
+                <span class="badge-category">@economyProps.Count عقار</span>
+            </div>
+            <div class="section-sub">
+                <i class="fas fa-arrow-left"></i> خيارات بأسعار معقولة تناسب الميزانيات المحدودة
+            </div>
+            <div class="properties-grid" id="economyGrid">
+                @if (economyProps.Any())
+                {
+                    foreach (var prop in economyProps)
+                    {
+                        string mainImage = "/image/default.jpg";
+                        if (prop.Images != null && prop.Images.Any())
+                        {
+                            var mainImg = prop.Images.FirstOrDefault(i => i.IsMain);
+                            if (mainImg != null && !string.IsNullOrEmpty(mainImg.ImageUrl))
+                            {
+                                mainImage = mainImg.ImageUrl;
+                            }
+                        }
+
+                        if (mainImage == "/image/default.jpg" && prop.PropertyType?.NameAr != null)
+                        {
+                            var typeName = prop.PropertyType.NameAr;
+                            var imageList = new List<string> { "default.jpg" };
+
+                            if (typeName.Contains("فيلا"))
+                                imageList = new List<string> { "villa_1.jpg", "villa_2.jpg", "villa_3.jpg", "villa_4.jpg", "villa_5.jpg" };
+                            else if (typeName.Contains("شقة"))
+                                imageList = new List<string> { "apartment_1.jpg", "apartment_2.jpg", "apartment_3.jpg", "apartment_4.jpg", "apartment_5.jpg" };
+                            else if (typeName.Contains("مكتب"))
+                                imageList = new List<string> { "office_1.jpg", "office_2.jpg", "office_3.jpg", "office_4.jpg", "office_5.jpg" };
+                            else if (typeName.Contains("أرض زراعية"))
+                                imageList = new List<string> { "farmland_1.jpg", "farmland_2.jpg", "farmland_3.jpg", "farmland_4.jpg", "farmland_5.jpg" };
+
+                            var random = new Random();
+                            var selectedImage = imageList[random.Next(imageList.Count)];
+                            mainImage = "/image/" + selectedImage;
+                        }
+
+                        <div class="property-card">
+                            <div class="property-image">
+                                <img src="@mainImage" alt="@prop.Title" />
+                            </div>
+                            <div class="property-content">
+                                <h3 class="property-title">@prop.Title</h3>
+                                <div class="property-price"><span class="price-original">@prop.Price.ToString("N0") @prop.PriceCurrency</span></div>
+                                <div class="property-location"><i class="fas fa-map-marker-alt"></i><span>@(prop.Neighborhood ?? "")، @ViewBag.CityName</span></div>
+                                <div class="property-type"><i class="fas fa-building"></i><span>@(prop.PropertyType?.NameAr ?? "عقار")</span></div>
+                                <div class="property-meta"><span><i class="fas fa-user"></i> @(prop.Advertiser?.FullName ?? "معلن")</span></div>
+                            </div>
+                            <div class="property-footer">
+                                <div class="footer-features">
+                                    <div class="footer-item"><i class="fas fa-door-open"></i> @prop.Rooms</div>
+                                    <div class="footer-item"><i class="fas fa-ruler-combined"></i> @prop.Area م²</div>
+                                    <div class="footer-item"><i class="fas fa-bath"></i> @prop.Bathrooms</div>
+                                </div>
+                                <div style="display:flex; gap:8px; align-items:center;">
+                                    <button class="btn-more" onclick="viewProperty('@prop.Code')">
+                                        <i class="fas fa-eye"></i> تفاصيل
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <p style="color:rgba(255,255,255,0.6); font-size:1.2rem; padding:20px; text-align:center; grid-column:1/-1;">لا توجد عقارات اقتصادية في هذه المحافظة حالياً</p>
+                }
+            </div>
+        </div>
+
+        <div class="section-wrapper" id="middleSection">
+            <div class="section-title">
+                <i class="fas fa-chart-line"></i> عقارات متوسطة
+                <span class="badge-category">@middleProps.Count عقار</span>
+            </div>
+            <div class="section-sub">
+                <i class="fas fa-arrow-left"></i> توازن ممتاز بين السعر والجودة والمساحة
+            </div>
+            <div class="properties-grid" id="middleGrid">
+                @if (middleProps.Any())
+                {
+                    foreach (var prop in middleProps)
+                    {
+                        string mainImage = "/image/default.jpg";
+                        if (prop.Images != null && prop.Images.Any())
+                        {
+                            var mainImg = prop.Images.FirstOrDefault(i => i.IsMain);
+                            if (mainImg != null && !string.IsNullOrEmpty(mainImg.ImageUrl))
+                            {
+                                mainImage = mainImg.ImageUrl;
+                            }
+                        }
+
+                        if (mainImage == "/image/default.jpg" && prop.PropertyType?.NameAr != null)
+                        {
+                            var typeName = prop.PropertyType.NameAr;
+                            var imageList = new List<string> { "default.jpg" };
+                            if (typeName.Contains("فيلا"))
+                                imageList = new List<string> { "villa_1.jpg", "villa_2.jpg", "villa_3.jpg", "villa_4.jpg", "villa_5.jpg" };
+                            else if (typeName.Contains("شقة"))
+                                imageList = new List<string> { "apartment_1.jpg", "apartment_2.jpg", "apartment_3.jpg", "apartment_4.jpg", "apartment_5.jpg" };
+                            else if (typeName.Contains("مكتب"))
+                                imageList = new List<string> { "office_1.jpg", "office_2.jpg", "office_3.jpg", "office_4.jpg", "office_5.jpg" };
+                            else if (typeName.Contains("أرض زراعية"))
+                                imageList = new List<string> { "farmland_1.jpg", "farmland_2.jpg", "farmland_3.jpg", "farmland_4.jpg", "farmland_5.jpg" };
+                            var random = new Random();
+                            var selectedImage = imageList[random.Next(imageList.Count)];
+                            mainImage = "/image/" + selectedImage;
+                        }
+
+                        <div class="property-card">
+                            <div class="property-image">
+                                <img src="@mainImage" alt="@prop.Title" />
+                            </div>
+                            <div class="property-content">
+                                <h3 class="property-title">@prop.Title</h3>
+                                <div class="property-price"><span class="price-original">@prop.Price.ToString("N0") @prop.PriceCurrency</span></div>
+                                <div class="property-location"><i class="fas fa-map-marker-alt"></i><span>@(prop.Neighborhood ?? "")، @ViewBag.CityName</span></div>
+                                <div class="property-type"><i class="fas fa-building"></i><span>@(prop.PropertyType?.NameAr ?? "عقار")</span></div>
+                                <div class="property-meta"><span><i class="fas fa-user"></i> @(prop.Advertiser?.FullName ?? "معلن")</span></div>
+                            </div>
+                            <div class="property-footer">
+                                <div class="footer-features">
+                                    <div class="footer-item"><i class="fas fa-door-open"></i> @prop.Rooms</div>
+                                    <div class="footer-item"><i class="fas fa-ruler-combined"></i> @prop.Area م²</div>
+                                    <div class="footer-item"><i class="fas fa-bath"></i> @prop.Bathrooms</div>
+                                </div>
+                                <div style="display:flex; gap:8px; align-items:center;">
+                                    <button class="btn-more" onclick="viewProperty('@prop.Code')">
+                                        <i class="fas fa-eye"></i> تفاصيل
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <p style="color:rgba(255,255,255,0.6); font-size:1.2rem; padding:20px; text-align:center; grid-column:1/-1;">لا توجد عقارات متوسطة في هذه المحافظة حالياً</p>
+                }
+            </div>
+        </div>
+
+        <div class="section-wrapper" id="luxurySection">
+            <div class="section-title">
+                <i class="fas fa-crown"></i> عقارات فاخرة
+                <span class="badge-category">@luxuryProps.Count عقار</span>
+            </div>
+            <div class="section-sub">
+                <i class="fas fa-arrow-left"></i> تصاميم راقية ومساحات واسعة وإطلالات مميزة
+            </div>
+            <div class="properties-grid" id="luxuryGrid">
+                @if (luxuryProps.Any())
+                {
+                    foreach (var prop in luxuryProps)
+                    {
+                        string mainImage = "/image/default.jpg";
+                        if (prop.Images != null && prop.Images.Any())
+                        {
+                            var mainImg = prop.Images.FirstOrDefault(i => i.IsMain);
+                            if (mainImg != null && !string.IsNullOrEmpty(mainImg.ImageUrl))
+                            {
+                                mainImage = mainImg.ImageUrl;
+                            }
+                        }
+
+                        if (mainImage == "/image/default.jpg" && prop.PropertyType?.NameAr != null)
+                        {
+                            var typeName = prop.PropertyType.NameAr;
+                            var imageList = new List<string> { "default.jpg" };
+                            if (typeName.Contains("فيلا"))
+                                imageList = new List<string> { "villa_1.jpg", "villa_2.jpg", "villa_3.jpg", "villa_4.jpg", "villa_5.jpg" };
+                            else if (typeName.Contains("شقة"))
+                                imageList = new List<string> { "apartment_1.jpg", "apartment_2.jpg", "apartment_3.jpg", "apartment_4.jpg", "apartment_5.jpg" };
+                            else if (typeName.Contains("مكتب"))
+                                imageList = new List<string> { "office_1.jpg", "office_2.jpg", "office_3.jpg", "office_4.jpg", "office_5.jpg" };
+                            else if (typeName.Contains("أرض زراعية"))
+                                imageList = new List<string> { "farmland_1.jpg", "farmland_2.jpg", "farmland_3.jpg", "farmland_4.jpg", "farmland_5.jpg" };
+                            var random = new Random();
+                            var selectedImage = imageList[random.Next(imageList.Count)];
+                            mainImage = "/image/" + selectedImage;
+                        }
+
+                        <div class="property-card">
+                            <div class="property-image">
+                                <img src="@mainImage" alt="@prop.Title" />
+                            </div>
+                            <div class="property-content">
+                                <h3 class="property-title">@prop.Title</h3>
+                                <div class="property-price"><span class="price-original">@prop.Price.ToString("N0") @prop.PriceCurrency</span></div>
+                                <div class="property-location"><i class="fas fa-map-marker-alt"></i><span>@(prop.Neighborhood ?? "")، @ViewBag.CityName</span></div>
+                                <div class="property-type"><i class="fas fa-building"></i><span>@(prop.PropertyType?.NameAr ?? "عقار")</span></div>
+                                <div class="property-meta"><span><i class="fas fa-user"></i> @(prop.Advertiser?.FullName ?? "معلن")</span></div>
+                            </div>
+                            <div class="property-footer">
+                                <div class="footer-features">
+                                    <div class="footer-item"><i class="fas fa-door-open"></i> @prop.Rooms</div>
+                                    <div class="footer-item"><i class="fas fa-ruler-combined"></i> @prop.Area م²</div>
+                                    <div class="footer-item"><i class="fas fa-bath"></i> @prop.Bathrooms</div>
+                                </div>
+                                <div style="display:flex; gap:8px; align-items:center;">
+                                    <button class="btn-more" onclick="viewProperty('@prop.Code')">
+                                        <i class="fas fa-eye"></i> تفاصيل
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <p style="color:rgba(255,255,255,0.6); font-size:1.2rem; padding:20px; text-align:center; grid-column:1/-1;">لا توجد عقارات فاخرة في هذه المحافظة حالياً</p>
+                }
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== المفضلة (LocalStorage) =====
+        function isLoggedIn() {
+            return localStorage.getItem("syrelis_logged_in") === "true";
+        }
+
+        function getFavorites() {
+            return JSON.parse(localStorage.getItem("syrelis_favorites") || "[]");
+        }
+
+        function isFavorite(propertyId) {
+            return getFavorites().some(f => f.id === propertyId);
+        }
+
+        function toggleFavorite(propertyId, propertyData) {
+            let favs = getFavorites();
+            const idx = favs.findIndex(f => f.id === propertyId);
+            if (idx > -1) {
+                favs.splice(idx, 1);
+                localStorage.setItem("syrelis_favorites", JSON.stringify(favs));
+                return false;
+            } else {
+                favs.unshift(propertyData);
+                localStorage.setItem("syrelis_favorites", JSON.stringify(favs));
+                return true;
+            }
+        }
+
+        function showToast(msg) {
+            const t = document.createElement("div");
+            t.className = "toast";
+            t.textContent = msg;
+            document.body.appendChild(t);
+            setTimeout(() => t.remove(), 2000);
+        }
+
+        window.handleFav = function (propertyId, btn) {
+            const card = btn.closest('.property-card');
+            const title = card.querySelector('.property-title')?.textContent || '';
+            const price = card.querySelector('.price-original')?.textContent || '';
+            const location = card.querySelector('.property-location span')?.textContent || '';
+            const img = card.querySelector('.property-image img')?.src || '';
+            const type = card.querySelector('.property-type span')?.textContent || '';
+            const agent = card.querySelector('.property-meta span')?.textContent || '';
+
+            const propData = {
+                id: propertyId,
+                title: title,
+                price: price,
+                location: location,
+                img: img,
+                type: type,
+                agent: agent
+            };
+
+            const added = toggleFavorite(propertyId, propData);
+            if (added) {
+                btn.classList.add('added');
+                btn.querySelector('i').className = 'fas fa-heart';
+                btn.querySelector('span').textContent = 'في المفضلة';
+                showToast('✓ تمت الإضافة للمفضلة');
+            } else {
+                btn.classList.remove('added');
+                btn.querySelector('i').className = 'far fa-heart';
+                btn.querySelector('span').textContent = 'أضف للمفضلة';
+                showToast('✓ تمت الإزالة من المفضلة');
+            }
+        };
+
+        // ===== زر التفاصيل =====
+        function viewProperty(code) {
+            if (code) {
+                window.location.href = '/Properties/DetailSearch?code=' + code;
+            } else {
+                showToast('⚠️ لم يتم العثور على العقار');
+            }
+        }
+
+        // ===== أزرار التصفية =====
+        const sections = {
+            economy: document.getElementById('economySection'),
+            middle: document.getElementById('middleSection'),
+            luxury: document.getElementById('luxurySection')
+        };
+
+        Object.values(sections).forEach(el => el.classList.remove('visible'));
+        document.getElementById('economySection').classList.add('visible');
+
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', function () {
+                const filter = this.dataset.filter;
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                Object.values(sections).forEach(el => el.classList.remove('visible'));
+                if (filter === 'economy') sections.economy.classList.add('visible');
+                else if (filter === 'middle') sections.middle.classList.add('visible');
+                else if (filter === 'luxury') sections.luxury.classList.add('visible');
+            });
+        });
+    </script>
+</body>
+</html>

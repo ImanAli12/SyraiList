@@ -1,0 +1,312 @@
+﻿@model RealEstateWebApp.Models.PropertyRequest
+@{
+    ViewData["Title"] = "تفاصيل طلب الزبون";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>تفاصيل طلب الزبون | SYRELIS</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&display=swap" rel="stylesheet" />
+    <style>
+        :root {
+            --dark: #192e43;
+            --gold: #d4af37;
+            --gray: #51596a;
+            --white: #ffffff;
+            --gold-light: #f4e5c2;
+            --gold-dark: #917005;
+            --border: #e8e4dc;
+            --bg-light: #f8f9fa;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(126deg, rgba(11, 19, 32, 0.85), rgb(11 19 32 / 62%)), url(https://images.unsplash.com/photo-1600585154526-990dced4db0d?q=80&w=2070&auto=format);
+            background-position: center;
+            background-attachment: fixed;
+            font-family: "Tajawal", sans-serif;
+            color: var(--gold);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 700px;
+            width: 100%;
+            background: var(--white);
+            border-radius: 28px;
+            padding: 40px 35px;
+            box-shadow: 0 25px 80px rgba(0,0,0,0.6);
+            border: 2px solid var(--gold);
+            position: relative;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--dark);
+            text-decoration: none;
+            font-weight: 700;
+            margin-bottom: 25px;
+            transition: 0.3s;
+        }
+
+            .back-link:hover {
+                color: var(--gold);
+            }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+            .header .icon-circle {
+                width: 70px;
+                height: 70px;
+                background: var(--dark);
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin: 0 auto 15px;
+                border: 3px solid var(--gold);
+            }
+
+                .header .icon-circle i {
+                    font-size: 2rem;
+                    color: var(--gold);
+                }
+
+            .header h1 {
+                color: var(--dark);
+                font-size: 1.8rem;
+                font-weight: 800;
+            }
+
+            .header .subtitle {
+                color: var(--gray);
+                font-size: 0.95rem;
+                margin-top: 5px;
+            }
+
+        .divider {
+            height: 3px;
+            background: linear-gradient(to left, var(--gold), var(--gold-dark));
+            width: 80px;
+            margin: 20px auto;
+            border-radius: 2px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 25px 0;
+        }
+
+        .info-item {
+            background: var(--bg-light);
+            border-radius: 12px;
+            padding: 14px 16px;
+            border: 1px solid var(--border);
+        }
+
+            .info-item .label {
+                font-size: 0.8rem;
+                color: var(--gray);
+                font-weight: 500;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                margin-bottom: 4px;
+            }
+
+                .info-item .label i {
+                    color: var(--gold);
+                }
+
+            .info-item .value {
+                font-size: 1rem;
+                font-weight: 700;
+                color: var(--dark);
+            }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        .contact-section {
+            background: var(--dark);
+            border-radius: 16px;
+            padding: 20px;
+            margin-top: 20px;
+            text-align: center;
+            border: 1px solid var(--gold);
+        }
+
+            .contact-section .phone {
+                font-size: 1.5rem;
+                font-weight: 800;
+                color: var(--gold);
+                direction: ltr;
+                display: inline-block;
+                background: rgba(255,255,255,0.1);
+                padding: 8px 25px;
+                border-radius: 12px;
+                margin: 10px 0;
+            }
+
+            .contact-section .email {
+                color: #fff;
+                font-size: 1rem;
+                direction: ltr;
+            }
+
+            .contact-section .label-contact {
+                color: rgba(255,255,255,0.7);
+                font-size: 0.85rem;
+            }
+
+        .btn-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 35px;
+            background: var(--gold);
+            color: var(--dark);
+            border: none;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            text-decoration: none;
+            font-family: "Tajawal", sans-serif;
+            transition: 0.3s;
+            margin-top: 20px;
+        }
+
+            .btn-back:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 8px 25px rgba(212, 175, 55, 0.3);
+            }
+
+        .flex-center {
+            text-align: center;
+        }
+
+        @@media (max-width: 600px) {
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .container {
+                padding: 25px 20px;
+            }
+
+            .header h1 {
+                font-size: 1.4rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="javascript:history.back()" class="back-link">
+            <i class="fa-solid fa-arrow-right"></i> العودة
+        </a>
+
+        <div class="header">
+            <div class="icon-circle"><i class="fa-solid fa-clipboard-list"></i></div>
+            <h1>طلب زبون</h1>
+            <div class="subtitle">هذا الطلب مطابق لعقارك، يمكنك التواصل مع الزبون مباشرة</div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="info-grid">
+            <div class="info-item">
+                <div class="label"><i class="fa-regular fa-clock"></i> تاريخ الطلب</div>
+                <div class="value">@Model.CreatedAt.ToString("yyyy/MM/dd")</div>
+            </div>
+            <div class="info-item">
+                <div class="label"><i class="fa-regular fa-clock"></i> الحالة</div>
+                <div class="value">@(Model.IsActive ? "✓ نشط" : "✗ منتهي")</div>
+            </div>
+            <div class="info-item full-width">
+                <div class="label"><i class="fa-solid fa-heading"></i> عنوان الطلب</div>
+                <div class="value">@(Model.Title ?? "-")</div>
+            </div>
+            <div class="info-item">
+                <div class="label"><i class="fa-solid fa-building"></i> نوع العقار</div>
+                <div class="value">@(Model.PropertyType?.NameAr ?? "-")</div>
+            </div>
+            <div class="info-item">
+                <div class="label"><i class="fa-solid fa-tag"></i> طبيعة الطلب</div>
+                <div class="value">@(Model.Status ?? "-")</div>
+            </div>
+            <div class="info-item">
+                <div class="label"><i class="fa-solid fa-location-dot"></i> المدينة</div>
+                <div class="value">@(Model.City?.NameAr ?? "-")</div>
+            </div>
+            <div class="info-item">
+                <div class="label"><i class="fa-solid fa-map-pin"></i> الحي</div>
+                <div class="value">@(Model.Neighborhood ?? "-")</div>
+            </div>
+            <div class="info-item">
+                <div class="label"><i class="fa-solid fa-money-bill"></i> الميزانية</div>
+                <div class="value">
+                    @(Model.MinPrice?.ToString("N0") ?? "0") - @(Model.MaxPrice?.ToString("N0") ?? "不限")
+                </div>
+            </div>
+            <div class="info-item">
+                <div class="label"><i class="fa-solid fa-vector-square"></i> المساحة</div>
+                <div class="value">
+                    @(Model.MinArea?.ToString("N0") ?? "0") - @(Model.MaxArea?.ToString("N0") ?? "不限") م²
+                </div>
+            </div>
+            <div class="info-item">
+                <div class="label"><i class="fa-solid fa-bed"></i> عدد الغرف</div>
+                <div class="value">
+                    @(Model.MinRooms?.ToString() ?? "0") - @(Model.MaxRooms?.ToString() ?? "不限")
+                </div>
+            </div>
+            @if (!string.IsNullOrEmpty(Model.Description))
+            {
+                <div class="info-item full-width">
+                    <div class="label"><i class="fa-solid fa-comment"></i> تفاصيل إضافية</div>
+                    <div class="value" style="font-weight:400; white-space:pre-wrap;">@Model.Description</div>
+                </div>
+            }
+        </div>
+
+        <!-- قسم التواصل -->
+        <div class="contact-section">
+            <div class="label-contact"><i class="fa-solid fa-phone"></i> رقم الهاتف:</div>
+            <div class="phone">@(Model.PhoneNumber ?? "-")</div>
+            <div class="label-contact" style="margin-top:10px;"><i class="fa-solid fa-envelope"></i> البريد الإلكتروني:</div>
+            <div class="email">@(Model.Email ?? "-")</div>
+        </div>
+
+        <div class="flex-center">
+            <a href="javascript:history.back()" class="btn-back">
+                <i class="fa-solid fa-arrow-right"></i> العودة إلى عقاراتي
+            </a>
+        </div>
+    </div>
+</body>
+</html>
