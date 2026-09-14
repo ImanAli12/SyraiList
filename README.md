@@ -155,13 +155,6 @@ string pythonScriptsPath = @"C:\Path\To\PythonScripts";
 string pythonPath = @"C:\Path\To\python.exe";
 ```
 
-### 6️⃣ Run the Project
-```bash
-dotnet run
-```
-Then open your browser at `https://localhost:5001` or `http://localhost:5000`.
-
----
 
 ## 🧠 How to Use the Algorithms
 
@@ -173,21 +166,4 @@ Then open your browser at `https://localhost:5001` or `http://localhost:5000`.
    - `GenerateSimilarities.py`: Computes similar properties.
 5. After training completes, results will appear in search pages and property details.
 
----
 
-## ⚠️ Important Notes
-
-- **Absolute Paths**: Python paths are hardcoded in `DashboardController.cs` and must be adjusted before running.
-- **Data Inflation**: In `DashboardController`, statistics are inflated to reach 27,300 for demonstration purposes. If you need real data, remove the inflation code.
-- **Smart Search**: In `SearchController`, `selectedCluster` is calculated but not used in the actual filtering (code commented out). You can enable it to improve results.
-- **Sample Data**: The file `real_estate_clean.xlsx` contains randomly generated data for testing purposes.
-
----
-
-## 🤝 Contributing
-Contributions are welcome! Please open an issue or submit a pull request.
-
----
-
-## 📜 License
-This project is for educational purposes. All rights reserved.
