@@ -42,7 +42,7 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
 // إعدادات Cookie
 builder.Services.ConfigureApplicationCookie(options =>
 {
-    options.LoginPath = "/Account/Login";
+    options.LoginPath =  "/Home/Index"; ;
     options.LogoutPath = "/Account/Logout";
     options.AccessDeniedPath = "/Account/AccessDenied";
     options.SlidingExpiration = true;

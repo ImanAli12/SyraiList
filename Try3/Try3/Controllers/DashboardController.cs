@@ -45,7 +45,6 @@ namespace RealEstateWebApp.Controllers
             {
                 string governorateName = user.Governorate;
 
-                // جلب العقارات المعلقة التي تنتمي إلى محافظته فقط
                 var pendingProperties = await _context.Properties
                     .Where(p => p.IsPending)
                     .Include(p => p.City)
@@ -55,19 +54,16 @@ namespace RealEstateWebApp.Controllers
                     .OrderByDescending(p => p.CreatedAt)
                     .ToListAsync();
 
-                // إنشاء ViewModel مبسط يحتوي فقط على العقارات المعلقة
                 var model = new DashboardViewModel
                 {
                     PendingProperties = pendingProperties,
                     PendingCount = pendingProperties.Count,
-                    // نجعل باقي الخصائص فارغة أو صفراً (لن تُعرض في الـ View)
                     TotalUsers = 0,
                     TotalProperties = 0,
                     SoldProperties = 0,
                     Users = new List<ApplicationUser>()
                 };
 
-                // تمرير بيانات إضافية للـ View لمعرفة أن هذا مدير محافظة
                 ViewBag.IsGovernorateAdmin = true;
                 ViewBag.GovernorateName = governorateName;
 
@@ -79,7 +75,7 @@ namespace RealEstateWebApp.Controllers
             // ============================================================
             else
             {
-                // 📊 1. توزيع العقارات حسب المدينة (مع تضخيم)
+                // 📊 1. توزيع العقارات حسب المدينة
                 var activeProperties = await _context.Properties
                     .Where(p => p.IsActive && !p.IsPending)
                     .Include(p => p.City)
@@ -92,27 +88,10 @@ namespace RealEstateWebApp.Controllers
                     .Take(30)
                     .ToList();
 
-                int realTotal = cityGroups.Sum(g => g.Count);
-                double targetTotal = 27300.0;
-                double factor = realTotal > 0 ? targetTotal / realTotal : 1;
+                ViewBag.CityLabels = cityGroups.Select(g => g.City).ToArray();
+                ViewBag.CityData = cityGroups.Select(g => g.Count).ToArray();
 
-                var inflatedData = cityGroups
-                    .Select(g => (City: g.City, Count: (int)Math.Round(g.Count * factor)))
-                    .ToList();
-
-                int inflatedSum = inflatedData.Sum(g => g.Count);
-                int diff = (int)targetTotal - inflatedSum;
-                if (diff != 0 && inflatedData.Any())
-                {
-                    int maxIndex = inflatedData.FindIndex(g => g.Count == inflatedData.Max(x => x.Count));
-                    var item = inflatedData[maxIndex];
-                    inflatedData[maxIndex] = (item.City, item.Count + diff);
-                }
-
-                ViewBag.CityLabels = inflatedData.Select(g => g.City).ToArray();
-                ViewBag.CityData = inflatedData.Select(g => g.Count).ToArray();
-
-                // 📊 2. توزيع العقارات حسب مجموعات K-Means (مع تضخيم ديناميكي ليصبح المجموع ≈ 27,000)
+                // 📊 2. توزيع العقارات حسب مجموعات K-Means
                 var clusterGroups = await _context.Properties
                     .Where(p => p.IsActive && !p.IsPending && p.ClusterId.HasValue)
                     .GroupBy(p => p.ClusterId.Value)
@@ -127,27 +106,8 @@ namespace RealEstateWebApp.Controllers
                         clusterCounts[g.ClusterId] = g.Count;
                 }
 
-                // ✅ تضخيم الأرقام لجعل المجموع ≈ 27,000 (باستخدام أسماء متغيرات مختلفة لتجنب التعارض)
-                int actualClusterTotal = clusterCounts.Sum();
-                int targetClusterTotal = 27000;
-                double clusterInflationFactor = actualClusterTotal > 0 ? (double)targetClusterTotal / actualClusterTotal : 1;
-
-                var inflatedClusterCounts = clusterCounts
-                    .Select(c => (int)Math.Round(c * clusterInflationFactor))
-                    .ToArray();
-
-                // ضبط الفروق الناتجة عن التقريب لضمان أن المجموع = 27000 بالضبط
-                int inflatedClusterSum = inflatedClusterCounts.Sum();
-                int clusterDiff = targetClusterTotal - inflatedClusterSum;
-                if (clusterDiff != 0 && inflatedClusterCounts.Length > 0)
-                {
-                    int maxIndex = Array.IndexOf(inflatedClusterCounts, inflatedClusterCounts.Max());
-                    inflatedClusterCounts[maxIndex] += clusterDiff;
-                }
-
                 ViewBag.ClusterLabels = new string[] { "اقتصادية", "متوسطة", "فاخرة" };
-                ViewBag.ClusterData = inflatedClusterCounts; // القيم المضخمة للعرض
-                                                             // (يمكنك حفظ القيم الأصلية في ViewBag.ClusterDataOriginal إذا أردت)
+                ViewBag.ClusterData = clusterCounts;
 
                 // 📊 3. توزيع درجات التشابه (Similarity Scores)
                 var similarityScores = await _context.SimilarProperties
@@ -178,7 +138,6 @@ namespace RealEstateWebApp.Controllers
 
                 var soldCountAll = await _context.Properties.CountAsync(p => p.IsSold && !p.IsPending);
 
-                // ✅ تعريف model
                 var model = new DashboardViewModel
                 {
                     TotalUsers = await _context.Users.CountAsync(),
@@ -193,7 +152,6 @@ namespace RealEstateWebApp.Controllers
                 return View(model);
             }
         }
-
         // ============================================================
         // ✅ تبديل حالة المستخدم (حظر / تنشيط) - مُصحح
         // ============================================================

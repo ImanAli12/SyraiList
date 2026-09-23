@@ -27,6 +27,7 @@ namespace RealEstateWebApp.Controllers
         // ============================================================
         // CREATE (GET)
         // ============================================================
+        [Authorize]
         public async Task<IActionResult> Create()
         {
             var viewModel = new PropertyViewModel
