@@ -11,4 +11,4 @@ COPY --from=build /app/out .
 ENV ASPNETCORE_URLS=http://+:8080
 ENV ASPNETCORE_ENVIRONMENT=Production
 EXPOSE 8080
-ENTRYPOINT ["dotnet", "try3.dll"]
+ENTRYPOINT ["dotnet", "Ty3.dll"]
