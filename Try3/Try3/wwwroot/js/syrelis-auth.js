@@ -78,7 +78,14 @@
         e.stopPropagation();
         openRequiredModal('لإعلان عقارك، يجب أن تكون مسجلاً دخولك في حسابك.<br>سجّل دخولك الآن وانشر عقارك بكل سهولة!');
     }, true);
-
+    document.addEventListener('click', function (e) {
+        var link = e.target.closest('a[href*="/Properties/MyFavorites"]');
+        if (!link) return;
+        if (isLoggedIn()) return;
+        e.preventDefault();
+        e.stopPropagation();
+        openRequiredModal('للوصول إلى محفوظاتك، يجب أن تكون مسجلاً دخولك.<br>سجّل دخولك الآن لرؤية عقاراتك المفضلة!');
+    }, true);
     // ✅ إغلاق وتبديل
     document.addEventListener('click', function (e) {
         if (e.target.id === 'syrelisCloseAuth') closeAuthModal();
