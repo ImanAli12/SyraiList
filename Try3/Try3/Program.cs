@@ -8,7 +8,7 @@ using RealEstateWebApp.Models;
 using Microsoft.Extensions.Logging;
 using System;
 using Microsoft.AspNetCore.Server.Kestrel.Core; // أضف هذا السطر
-
+using RealEstateWebApp.Middlewares;
 var builder = WebApplication.CreateBuilder(args);
 
 // إضافة الخدمات
@@ -79,7 +79,7 @@ app.UseRouting();
 
 app.UseAuthentication();
 app.UseAuthorization();
-
+app.UseMiddleware<AuthInjectionMiddleware>();
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");

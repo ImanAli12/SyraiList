@@ -1,0 +1,218 @@
+﻿/* ===== SYRELIS Auth Modals — معزول تمامًا ===== */
+
+#authModal, #loginRequiredModal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.75);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    z-index: 999999;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Tajawal', sans-serif;
+    direction: rtl;
+}
+
+    #authModal.active, #loginRequiredModal.active {
+        display: flex !important;
+    }
+
+    #authModal *, #loginRequiredModal * {
+        box-sizing: border-box;
+    }
+
+    #authModal .syrelis-modal-card,
+    #loginRequiredModal .syrelis-modal-card {
+        background: #ffffff;
+        border-radius: 24px;
+        max-width: 440px;
+        width: 92%;
+        padding: 35px 30px;
+        text-align: center;
+        box-shadow: 0 25px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(212,175,55,0.3);
+        border: 2px solid #d4af37;
+        position: relative;
+        animation: syrelisFadeIn 0.3s ease;
+    }
+
+@keyframes syrelisFadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9) translateY(-20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+#authModal .syrelis-close,
+#loginRequiredModal .syrelis-close {
+    position: absolute;
+    top: 12px;
+    left: 15px;
+    background: none;
+    border: none;
+    font-size: 1.8rem;
+    color: #51596a;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+    #authModal .syrelis-close:hover,
+    #loginRequiredModal .syrelis-close:hover {
+        color: #d4af37;
+    }
+
+#authModal .syrelis-title {
+    color: #192e43;
+    font-size: 1.8rem;
+    font-weight: 800;
+    margin: 0 0 6px;
+}
+
+#authModal .syrelis-subtitle {
+    color: #51596a;
+    font-size: 0.95rem;
+    margin: 0 0 20px;
+    font-weight: 400;
+}
+
+#authModal .syrelis-input {
+    width: 100%;
+    padding: 12px 15px;
+    border: 2px solid #e8e4dc;
+    border-radius: 10px;
+    font-family: 'Tajawal', sans-serif;
+    font-size: 0.95rem;
+    color: #192e43;
+    background: #fff;
+    transition: all 0.25s;
+    margin-bottom: 12px;
+    outline: none;
+}
+
+    #authModal .syrelis-input:focus {
+        border-color: #192e43;
+        box-shadow: 0 0 0 2px rgba(25,46,67,0.1);
+    }
+
+    #authModal .syrelis-input::placeholder {
+        color: #999;
+    }
+
+#authModal .syrelis-btn {
+    width: 100%;
+    padding: 13px;
+    background: #192e43;
+    color: #ffffff;
+    border: none;
+    border-radius: 10px;
+    font-family: 'Tajawal', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: all 0.3s;
+}
+
+    #authModal .syrelis-btn:hover {
+        background: #d4af37;
+        color: #192e43;
+    }
+
+#authModal .syrelis-toggle {
+    margin-top: 15px;
+    color: #51596a;
+    font-size: 0.9rem;
+}
+
+    #authModal .syrelis-toggle a {
+        color: #d4af37;
+        font-weight: 700;
+        cursor: pointer;
+        text-decoration: none;
+    }
+
+        #authModal .syrelis-toggle a:hover {
+            text-decoration: underline;
+        }
+
+#loginRequiredModal .syrelis-title {
+    color: #192e43;
+    font-size: 1.6rem;
+    font-weight: 800;
+    margin: 0 0 10px;
+}
+
+#loginRequiredModal .syrelis-text {
+    color: #51596a;
+    font-size: 1rem;
+    line-height: 1.8;
+    margin-bottom: 25px;
+    font-weight: 400;
+}
+
+#loginRequiredModal .syrelis-buttons {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+#loginRequiredModal .syrelis-btn-cancel,
+#loginRequiredModal .syrelis-btn-login {
+    padding: 12px 28px;
+    border-radius: 10px;
+    font-family: 'Tajawal', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+#loginRequiredModal .syrelis-btn-cancel {
+    background: #e8e8ec;
+    color: #51596a;
+    border: 2px solid transparent;
+}
+
+    #loginRequiredModal .syrelis-btn-cancel:hover {
+        background: #d5d5dd;
+    }
+
+#loginRequiredModal .syrelis-btn-login {
+    background: #192e43;
+    color: #d4af37;
+    border: 2px solid #d4af37;
+}
+
+    #loginRequiredModal .syrelis-btn-login:hover {
+        background: #d4af37;
+        color: #192e43;
+    }
+
+#loginRequiredModal .syrelis-icon {
+    width: 70px;
+    height: 70px;
+    background: linear-gradient(135deg, #192e43, #1a3355);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 15px;
+    border: 3px solid #d4af37;
+    font-size: 2rem;
+    color: #d4af37;
+}
