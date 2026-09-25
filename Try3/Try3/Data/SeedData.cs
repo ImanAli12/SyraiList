@@ -16,28 +16,17 @@ namespace RealEstateWebApp.Data
             var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
             var context = serviceProvider.GetRequiredService<ApplicationDbContext>();
 
-            // ============================================================
-            // ✅ بيانات حساب المدير
-            // ============================================================
             string adminEmail = "admin@syrelis.com";
             string adminPassword = "Admin@123";
             string adminPhone = "0912345678";
             string adminName = "مدير النظام";
 
-            // ============================================================
             // 1️⃣ دور Admin
-            // ============================================================
             if (!await roleManager.RoleExistsAsync("Admin"))
-            {
                 await roleManager.CreateAsync(new IdentityRole("Admin"));
-                Console.WriteLine("✅ تم إنشاء دور Admin");
-            }
 
-            // ============================================================
             // 2️⃣ حساب المدير
-            // ============================================================
             var adminUser = await userManager.FindByEmailAsync(adminEmail);
-
             if (adminUser == null)
             {
                 adminUser = new ApplicationUser
@@ -50,19 +39,9 @@ namespace RealEstateWebApp.Data
                     IsAdmin = true,
                     FullName = adminName
                 };
-
                 var result = await userManager.CreateAsync(adminUser, adminPassword);
-
                 if (result.Succeeded)
-                {
                     await userManager.AddToRoleAsync(adminUser, "Admin");
-                    Console.WriteLine($"✅ تم إنشاء حساب المدير: {adminEmail}");
-                }
-                else
-                {
-                    foreach (var error in result.Errors)
-                        Console.WriteLine($"❌ خطأ في إنشاء المدير: {error.Description}");
-                }
             }
             else
             {
@@ -70,34 +49,54 @@ namespace RealEstateWebApp.Data
                 {
                     adminUser.IsAdmin = true;
                     await userManager.UpdateAsync(adminUser);
-                    Console.WriteLine("✅ تم ترقية المستخدم إلى مدير.");
                 }
-
                 if (!await userManager.IsInRoleAsync(adminUser, "Admin"))
                     await userManager.AddToRoleAsync(adminUser, "Admin");
-
-                Console.WriteLine($"ℹ️ حساب المدير موجود بالفعل: {adminEmail}");
             }
 
-            // ============================================================
-            // 3️⃣ أنواع العقارات: شقة، فيلا، مكتب، أرض
-            // ============================================================
+            // 3️⃣ أنواع العقارات
             var propertyTypes = new[] { "شقة", "فيلا", "مكتب", "أرض" };
-
             foreach (var typeName in propertyTypes)
             {
-                var exists = await context.PropertyTypes.AnyAsync(t => t.NameAr == typeName);
-                if (!exists)
-                {
+                if (!await context.PropertyTypes.AnyAsync(t => t.NameAr == typeName))
                     context.PropertyTypes.Add(new PropertyType { NameAr = typeName });
-                    Console.WriteLine($"✅ تم إضافة نوع العقار: {typeName}");
+            }
+            await context.SaveChangesAsync();
+
+            // 3.5️⃣ المرافق (Features)
+            var features = new[]
+            {
+                new { NameAr = "مكيف",              IconClass = "fa-snowflake" },
+                new { NameAr = "مصعد",              IconClass = "fa-arrow-up-short-wide" },
+                new { NameAr = "حراسة",             IconClass = "fa-shield-halved" },
+                new { NameAr = "موقف سيارات",       IconClass = "fa-car" },
+                new { NameAr = "حديقة",             IconClass = "fa-tree" },
+                new { NameAr = "مسبح",              IconClass = "fa-water" },
+                new { NameAr = "تدفئة مركزية",      IconClass = "fa-fire" },
+                new { NameAr = "غاز طبيعي",         IconClass = "fa-fire-flame-simple" },
+                new { NameAr = "كهرباء 24 ساعة",    IconClass = "fa-bolt" },
+                new { NameAr = "ماء 24 ساعة",       IconClass = "fa-droplet" },
+                new { NameAr = "شرفة",              IconClass = "fa-building" },
+                new { NameAr = "غرفة خدم",          IconClass = "fa-broom" },
+                new { NameAr = "كاميرات مراقبة",    IconClass = "fa-video" },
+                new { NameAr = "إنترنت",            IconClass = "fa-wifi" },
+                new { NameAr = "سطح خاص",           IconClass = "fa-house" }
+            };
+
+            foreach (var f in features)
+            {
+                if (!await context.Features.AnyAsync(x => x.NameAr == f.NameAr))
+                {
+                    context.Features.Add(new Feature
+                    {
+                        NameAr = f.NameAr,
+                        IconClass = f.IconClass
+                    });
                 }
             }
             await context.SaveChangesAsync();
 
-            // ============================================================
-            // 4️⃣ المدن السورية (بنفس ترتيب JavaScript بالضبط)
-            // ============================================================
+            // 4️⃣ المدن السورية
             var cities = new[]
             {
                 new { NameAr = "حمص",       Lat = 34.7327, Lng = 36.7154 },
@@ -116,16 +115,13 @@ namespace RealEstateWebApp.Data
                 new { NameAr = "دمشق",      Lat = 33.5138, Lng = 36.2765 }
             };
 
-            // ⚠️ إذا كانت المدن موجودة مسبقًا بترتيب مختلف، احذفها أولاً
             if (await context.Cities.AnyAsync())
             {
                 context.Neighborhoods.RemoveRange(context.Neighborhoods);
                 context.Cities.RemoveRange(context.Cities);
                 await context.SaveChangesAsync();
-                Console.WriteLine("🗑️ تم حذف المدن القديمة لإعادة التعبئة بالترتيب الصحيح");
             }
 
-            // إدخال المدن بنفس الترتيب (سيحصل كل منها على Id تسلسلي 1..14)
             foreach (var c in cities)
             {
                 context.Cities.Add(new City
@@ -135,9 +131,9 @@ namespace RealEstateWebApp.Data
                     Longitude = c.Lng
                 });
             }
-
             await context.SaveChangesAsync();
-            Console.WriteLine("✅ تم إدخال 14 مدينة سورية بالترتيب الصحيح");
+
+            Console.WriteLine("✅ تم تهيئة جميع البيانات بنجاح");
         }
     }
 }
