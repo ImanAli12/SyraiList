@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using RealEstateWebApp.Models;
 using System;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore; // ✅ مهم لاستخدام AnyAsync
 
 namespace RealEstateWebApp.Data
 {
@@ -13,6 +14,9 @@ namespace RealEstateWebApp.Data
         {
             var userManager = serviceProvider.GetRequiredService<UserManager<ApplicationUser>>();
             var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+
+            // ✅ الوصول إلى قاعدة البيانات
+            var context = serviceProvider.GetRequiredService<ApplicationDbContext>();
 
             // ============================================================
             // ✅ بيانات حساب المدير (عدّل حسب رغبتك)
@@ -90,6 +94,29 @@ namespace RealEstateWebApp.Data
 
                 Console.WriteLine($"ℹ️ حساب المدير موجود بالفعل: {adminEmail}");
             }
+
+            // ============================================================
+            // 3️⃣ تعبئة أنواع العقارات: شقة، فيلا، مكتب، أرض
+            // ============================================================
+            var propertyTypes = new[] { "شقة", "فيلا", "مكتب", "أرض" };
+
+            foreach (var typeName in propertyTypes)
+            {
+                var exists = await context.PropertyTypes
+                    .AnyAsync(t => t.NameAr == typeName);
+
+                if (!exists)
+                {
+                    context.PropertyTypes.Add(new PropertyType
+                    {
+                        NameAr = typeName
+                    });
+
+                    Console.WriteLine($"✅ تم إضافة نوع العقار: {typeName}");
+                }
+            }
+
+            await context.SaveChangesAsync();
         }
     }
 }
