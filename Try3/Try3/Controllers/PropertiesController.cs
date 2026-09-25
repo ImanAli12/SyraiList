@@ -326,11 +326,6 @@ namespace RealEstateWebApp.Controllers
                 return RedirectToAction("MyProperties");
             }
 
-            if (property.IsPending)
-            {
-                TempData["Error"] = "⏳ هذا العقار قيد المراجعة، لا يمكن تعديله حالياً.";
-                return RedirectToAction("MyProperties");
-            }
 
             int propertyNumber = 0;
             if (!string.IsNullOrEmpty(property.Code))
@@ -558,11 +553,7 @@ namespace RealEstateWebApp.Controllers
                 }
 
                 // ✅ لا يمكن تعديل العقار إذا كان قيد المراجعة (معلّق)
-                if (property.IsPending)
-                {
-                    TempData["Error"] = "⏳ هذا العقار قيد المراجعة، لا يمكن تعديله حالياً.";
-                    return RedirectToAction("MyProperties");
-                }
+               
 
                 // ✅ تحديث الحقول
                 property.Title = viewModel.Title;
