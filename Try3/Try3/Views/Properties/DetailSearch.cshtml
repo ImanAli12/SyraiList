@@ -4,19 +4,16 @@
 @{
     ViewData["Title"] = "تفاصيل العقار";
     Layout = null;
-    // ✅ الترتيب من الأرخص إلى الأعلى، وعرض أول 10 فقط
     var similar = (ViewBag.SimilarProperties as List<RealEstateWebApp.Models.Property> ?? new List<RealEstateWebApp.Models.Property>())
         .OrderBy(p => p.Price)
         .Take(30)
         .ToList();
 }
-<!-- للتأكد من الـ ID -->
 @Html.AntiForgeryToken()
 <input type="hidden" id="propertyId" value="@Model.Id" />
 
 @* ========== الدوال المساعدة ========== *@
 @functions {
-    // 1️⃣ إرجاع اسم صورة عشوائية واحدة بناءً على النوع
     public string GetRandomImageByType(string typeName)
     {
         var imageList = GetImageListByType(typeName);
@@ -24,7 +21,6 @@
         return imageList[random.Next(imageList.Count)];
     }
 
-    // 2️⃣ إرجاع قائمة بأسماء الصور المتاحة حسب النوع
     public List<string> GetImageListByType(string typeName)
     {
         var imageList = new List<string> { "default.jpg" };
@@ -42,7 +38,6 @@
         return imageList;
     }
 
-    // 3️⃣ إرجاع قائمة عناوين صور عشوائية (حتى 5 صور مختلفة)
     public List<string> GetRandomImageUrlsByType(string typeName, int count = 5)
     {
         var imageList = GetImageListByType(typeName);
@@ -52,7 +47,6 @@
         return selected.Select(name => "/image/" + name).ToList();
     }
 
-    // 4️⃣ الحصول على رابط الصورة الرئيسية للعقار (قاعدة بيانات أو عشوائي)
     public string GetPropertyImageUrl(RealEstateWebApp.Models.Property prop)
     {
         if (prop.Images != null && prop.Images.Any())
@@ -76,7 +70,6 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
     <style>
-        /* ===== جميع التنسيقات كما هي (لا تغيير) ===== */
         :root {
             --dark: #192e43;
             --gold: #d4af37;
@@ -111,7 +104,6 @@
             padding: 2rem;
         }
 
-        /* ===== Navbar ===== */
         .navbar {
             background: rgba(11, 19, 32, 0.96);
             padding: 0 1rem;
@@ -258,7 +250,6 @@
                     color: #0b1320;
                 }
 
-        /* ===== Page Header ===== */
         .page-header {
             padding: 30px 35px;
             margin-bottom: 49px;
@@ -311,7 +302,6 @@
             margin: 5px 0 0 0;
         }
 
-        /* ===== Card ===== */
         .card {
             max-width: 100%;
             background: var(--white);
@@ -323,7 +313,6 @@
             box-shadow: var(--shadow);
         }
 
-        /* ===== Detail Header ===== */
         .detail-header-card {
             background: linear-gradient(135deg, #f8f9fa, #ffffff);
             border-radius: 16px;
@@ -374,7 +363,6 @@
                 color: var(--gray);
             }
 
-        /* ===== Quick Stats ===== */
         .detail-quick-stats {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -428,7 +416,6 @@
             font-weight: 500;
         }
 
-        /* ===== معلومات المالك (🔥 تمت الإضافة هنا) ===== */
         .owner-info-section {
             background: linear-gradient(135deg, rgba(212, 175, 55, 0.05), transparent);
             padding: 20px;
@@ -478,7 +465,6 @@
                 font-size: 1.1rem;
             }
 
-        /* ===== Sections ===== */
         .detail-section {
             margin-bottom: 30px;
             padding-bottom: 30px;
@@ -534,7 +520,6 @@
             border-right: 4px solid var(--gold);
         }
 
-        /* ===== Gallery ===== */
         .detail-gallery-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -592,7 +577,6 @@
                 transform: translate(-50%, -50%) scale(1.1);
             }
 
-        /* ===== Features ===== */
         .detail-features-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -624,7 +608,6 @@
                 text-align: center;
             }
 
-        /* ===== Location ===== */
         .detail-location-wrapper {
             display: grid;
             grid-template-columns: 1fr 350px;
@@ -634,11 +617,13 @@
 
         .detail-static-map {
             width: 100%;
-            height: 330px;
+            height: 400px;
             border-radius: 18px;
             overflow: hidden;
             border: 3px solid #d4af37;
             transition: all 0.3s ease;
+            position: relative;
+            background: #e5e7eb;
         }
 
             .detail-static-map:hover {
@@ -649,6 +634,7 @@
         #detailStaticMap {
             width: 100%;
             height: 100%;
+            z-index: 1;
         }
 
         .detail-location-info {
@@ -707,7 +693,6 @@
                 font-weight: 700;
             }
 
-        /* ===== Buttons ===== */
         .btn {
             padding: 12px 26px;
             border: none;
@@ -751,7 +736,6 @@
                 border-color: #22c55e;
             }
 
-        /* ===== العقارات المشابهة ===== */
         .similar-section-title {
             font-size: 1.6rem;
             font-weight: 800;
@@ -910,7 +894,6 @@
                 font-weight: 500;
             }
 
-        /* ===== Notification ===== */
         .notification-success {
             background: rgba(25, 46, 67, 0.92);
             border: 2px solid #d4af37;
@@ -951,7 +934,38 @@
                 color: #3b82f6;
             }
 
-        /* ===== Responsive ===== */
+        /* خريطة Leaflet — تنسيق أزرار التبديل */
+        .map-toggle-container {
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+            padding: 4px;
+            display: flex;
+            gap: 4px;
+        }
+
+        .map-toggle-btn {
+            border: none;
+            background: transparent;
+            padding: 8px 14px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #444;
+            cursor: pointer;
+            border-radius: 6px;
+            font-family: 'Tajawal', sans-serif;
+            transition: all 0.2s ease;
+        }
+
+            .map-toggle-btn:hover {
+                background: #f5f5f5;
+            }
+
+            .map-toggle-btn.active {
+                background: #e8f0fe;
+                color: #1a73e8;
+            }
+
         @@media (max-width: 992px) {
             .detail-location-wrapper {
                 grid-template-columns: 1fr;
@@ -1157,15 +1171,14 @@
 </head>
 <body>
 
-    <!-- ====== نافبار ====== -->
     <nav class="navbar">
         <img class="logo" src="/image/hero.png" alt="SYRELIS" />
         <ul class="nav-links">
-           <li><a href="/Home/Index?skipRedirect=true"><span class="link_span">الرئيسية</span></a></li>
+            <li><a href="/Home/Index?skipRedirect=true"><span class="link_span">الرئيسية</span></a></li>
             <li><a href="/Properties/Create">أعلن عن عقارك</a></li>
             <li><a href="/Search/Index"><span class="link_span">ابحث عن عقارك</span></a></li>
             <li><a href="@Url.Action("MyFavorites", "Properties")">محفوظاتي</a></li>
-           <li> <a href="/Home/Index?skipRedirect=true#contactSection" id="contactNavLink"> <span class="link_span">تواصل معنا</span>  </a></li>
+            <li><a href="/Home/Index?skipRedirect=true#contactSection" id="contactNavLink"><span class="link_span">تواصل معنا</span></a></li>
         </ul>
         <div class="navbar-right">
             @if (SignInManager.IsSignedIn(User))
@@ -1186,10 +1199,8 @@
         </div>
     </nav>
 
-    <!-- ====== المحتوى ====== -->
     <div class="container">
 
-        <!-- ====== Page Header ====== -->
         <div class="page-header">
             <div class="page-info">
                 <a href="/Properties/MyProperties" class="back-button">
@@ -1204,7 +1215,6 @@
 
         <div class="card">
 
-            <!-- ====== الهيدر ====== -->
             <div class="detail-header-card">
                 <div class="detail-header-info">
                     <h2>@(Model.PropertyType?.NameAr ?? "عقار")</h2>
@@ -1217,7 +1227,6 @@
                 </div>
             </div>
 
-            <!-- ====== الإحصائيات السريعة ====== -->
             <div class="detail-quick-stats">
                 @if (!string.IsNullOrEmpty(Model.Code))
                 {
@@ -1279,9 +1288,6 @@
                 }
             </div>
 
-            <!-- ========================================================== -->
-            <!-- 🔥🔥🔥 قسم معلومات المالك (تمت الإضافة هنا) 🔥🔥🔥        -->
-            <!-- ========================================================== -->
             <div class="owner-info-section">
                 <h3 class="detail-section-title" style="margin-top:0;">
                     <i class="fa-solid fa-user-tie"></i> معلومات المالك
@@ -1306,7 +1312,6 @@
                 </div>
             </div>
 
-            <!-- ====== الوصف ====== -->
             @if (!string.IsNullOrEmpty(Model.Description))
             {
                 <div class="detail-section">
@@ -1315,9 +1320,6 @@
                 </div>
             }
 
-            <!-- ========================================================== -->
-            <!-- 🔥 معرض الصور (باستخدام المنطق الجديد)                      -->
-            <!-- ========================================================== -->
             <div class="detail-section">
                 <h3 class="detail-section-title">
                     <i class="fa-solid fa-images"></i> معرض الصور
@@ -1352,7 +1354,6 @@
                 </div>
             </div>
 
-            <!-- ====== المرافق ====== -->
             @if (Model.Features != null && Model.Features.Any())
             {
                 <div class="detail-section">
@@ -1370,25 +1371,13 @@
             }
 
             <!-- ====== الموقع ====== -->
-            <!-- ====== الموقع ====== -->
             <div class="detail-section">
                 <h3 class="detail-section-title"><i class="fa-solid fa-map-location-dot"></i> الموقع</h3>
                 <div class="detail-location-wrapper">
-                    <div class="detail-static-map" style="height:400px; border-radius:18px; overflow:hidden; border:3px solid #d4af37; position:relative;">
+                    <div class="detail-static-map">
                         @if (Model.Latitude.HasValue && Model.Longitude.HasValue)
                         {
-                            var lat = Model.Latitude.Value.ToString(System.Globalization.CultureInfo.InvariantCulture);
-                            var lng = Model.Longitude.Value.ToString(System.Globalization.CultureInfo.InvariantCulture);
-                            <iframe width="100%"
-                                    height="100%"
-                                    frameborder="0"
-                                    scrolling="no"
-                                    marginheight="0"
-                                    marginwidth="0"
-                                    src="https://www.openstreetmap.org/export/embed.html?bbox=@(Model.Longitude.Value - 0.01)%2C@(Model.Latitude.Value - 0.01)%2C@(Model.Longitude.Value + 0.01)%2C@(Model.Latitude.Value + 0.01)&layer=mapnik&marker=@lat%2C@lng"
-                                    style="border:none;"
-                                    allowfullscreen>
-                            </iframe>
+                            <div id="detailStaticMap"></div>
                         }
                         else
                         {
@@ -1433,7 +1422,9 @@
                                 <i class="fa-solid fa-globe"></i>
                                 <div>
                                     <strong>الإحداثيات</strong>
-                                    @Model.Latitude.Value.ToString("F5"), @Model.Longitude.Value.ToString("F5")
+                                    <span dir="ltr" style="display:inline-block; unicode-bidi:embed; font-family: 'Courier New', monospace; color: #192e43; font-weight: 700;">
+                                        @Model.Latitude.Value.ToString("F5"), @Model.Longitude.Value.ToString("F5")
+                                    </span>
                                 </div>
                             </div>
                         }
@@ -1441,7 +1432,6 @@
                 </div>
             </div>
 
-            <!-- ====== أزرار ====== -->
             <div style="text-align:center; margin-top:30px; display:flex; justify-content:center; gap:15px; flex-wrap:wrap;">
                 <button onclick="addToFavorites(@Model.Id)" class="btn btn-gold" id="favoriteBtn">
                     <i class="fa-regular fa-heart"></i> إضافة إلى المفضلة
@@ -1453,7 +1443,6 @@
 
         </div>
 
-        <!-- ====== العقارات المشابهة ====== -->
         <div class="card" style="margin-top: 0px;">
             <div class="similar-section-title">
                 <i class="fa-regular fa-copy"></i>
@@ -1506,13 +1495,11 @@
 
     </div>
 
-    <!-- ====== مودال الإشعارات ====== -->
     <div id="customNotification" style="display:none; position:fixed; top:20px; left:50%; transform:translateX(-50%); z-index:99999; min-width:300px; max-width:500px; padding:18px 28px; border-radius:16px; box-shadow:0 15px 50px rgba(0,0,0,0.5); backdrop-filter:blur(12px); font-family:'Tajawal',sans-serif; text-align:center; transition:all 0.4s ease; opacity:0; direction:rtl;">
         <div id="notificationIcon" style="font-size:2rem; margin-bottom:8px;"></div>
         <div id="notificationMessage" style="font-size:1.1rem; font-weight:700;"></div>
     </div>
 
-    <!-- ====== سكربتات ====== -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         // ====== عرض الصور بتكبير ======
@@ -1520,11 +1507,11 @@
             var lightbox = document.createElement('div');
             lightbox.style.cssText = 'position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.95); z-index:999999; display:flex; align-items:center; justify-content:center; padding:20px; cursor:pointer;';
             lightbox.innerHTML = `
-                                                <img src="${src}" style="max-width:90%; max-height:90vh; border-radius:16px; box-shadow:0 25px 80px rgba(0,0,0,0.8);">
-                                                <button style="position:absolute; top:25px; right:25px; width:50px; height:50px; background:#d4af37; border:none; border-radius:50%; cursor:pointer; font-size:1.4rem; color:#192e43; transition:all 0.3s;" onclick="this.parentElement.remove()">
-                                                    <i class="fa-solid fa-xmark"></i>
-                                                </button>
-                                            `;
+                        <img src="${src}" style="max-width:90%; max-height:90vh; border-radius:16px; box-shadow:0 25px 80px rgba(0,0,0,0.8);">
+                        <button style="position:absolute; top:25px; right:25px; width:50px; height:50px; background:#d4af37; border:none; border-radius:50%; cursor:pointer; font-size:1.4rem; color:#192e43; transition:all 0.3s;" onclick="this.parentElement.remove()">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    `;
             lightbox.onclick = function (e) { if (e.target === this) this.remove(); };
             document.body.appendChild(lightbox);
             document.body.style.overflow = 'hidden';
@@ -1538,26 +1525,86 @@
                 document.addEventListener('DOMContentLoaded', function () {
                     var mapContainer = document.getElementById('detailStaticMap');
                     if (!mapContainer) return;
+
+                    var lat = @Model.Latitude.Value.ToString("F6", System.Globalization.CultureInfo.InvariantCulture);
+                    var lng = @Model.Longitude.Value.ToString("F6", System.Globalization.CultureInfo.InvariantCulture);
+
                     var map = L.map('detailStaticMap', {
-                        center: [@Model.Latitude.Value.ToString("F6"), @Model.Longitude.Value.ToString("F6")],
+                        center: [lat, lng],
                         zoom: 15,
-                        dragging: false,
-                        scrollWheelZoom: false,
-                        touchZoom: false,
-                        doubleClickZoom: false,
-                        boxZoom: false,
-                        keyboard: false,
-                        zoomControl: false,
-                        attributionControl: false
+                        zoomControl: true,
+                        dragging: true,
+                        scrollWheelZoom: true
                     });
-                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
-                    var pegmanSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 23 38" width="44" height="44">
-                                                                    <path d="M16.6 38.1h-5.5l-.2-2.9-.2 2.9H5.2L5 25.3l-.8 2a1.53 1.53 0 01-1.9.9l-1.2-.4a1.58 1.58 0 01-1-1.9v-.1c.3-.9 3.1-11.2 3.1-11.2a2.66 2.66 0 012.3-2l.6-.5a6.93 6.93 0 014.7-12 6.8 6.8 0 014.9 2 7 7 0 012 4.9 6.65 6.65 0 01-2.2 5l.7.5a2.78 2.78 0 012.4 2s2.9 11.2 2.9 11.3a1.53 1.53 0 01-.9 1.9l-1.3.4a1.63 1.63 0 01-1.9-.9l-.7-1.8z" fill="#333" opacity=".7"/>
-                                                                    <path d="m20.6 26.1-2.9-11.3a1.71 1.71 0 00-1.6-1.2H5.7a1.69 1.69 0 00-1.5 1.3L1.1 26.2a.61.61 0 00.3.7l1.1.4a.61.61 0 00.7-.3l2.7-6.7.2 16.8h3.6l.6-9.3a.47.47 0 01.44-.5h.06c.4 0 .4.2.5.5l.6 9.3h3.6l.2-16.8 2.5 6.6a.52.52 0 00.66.31l1.2-.4a.57.57 0 00.5-.7Z" fill="#fdbf2d"/>
-                                                                    <circle cx="10.9" cy="7" r="5.9" fill="#fdbf2d"/>
-                                                                </svg>`;
-                    var pegmanIcon = L.divIcon({ className: 'pegman-marker', html: pegmanSVG, iconSize: [44, 44], iconAnchor: [22, 42] });
-                    L.marker([@Model.Latitude.Value.ToString("F6"), @Model.Longitude.Value.ToString("F6")], { icon: pegmanIcon, draggable: false }).addTo(map);
+
+                    // طبقة الخريطة الأساسية
+                    var baseLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        maxZoom: 19,
+                        attribution: '© OpenStreetMap'
+                    }).addTo(map);
+
+                    // طبقة القمر الصناعي
+                    var satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                        maxZoom: 19
+                    });
+                    var satelliteLabels = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
+                        maxZoom: 19
+                    });
+
+                    // أيقونة الرجل الأصفر
+                    var pegmanSVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 23 38" width="44" height="44">' +
+                        '<path d="M16.6 38.1h-5.5l-.2-2.9-.2 2.9H5.2L5 25.3l-.8 2a1.53 1.53 0 01-1.9.9l-1.2-.4a1.58 1.58 0 01-1-1.9v-.1c.3-.9 3.1-11.2 3.1-11.2a2.66 2.66 0 012.3-2l.6-.5a6.93 6.93 0 014.7-12 6.8 6.8 0 014.9 2 7 7 0 012 4.9 6.65 6.65 0 01-2.2 5l.7.5a2.78 2.78 0 012.4 2s2.9 11.2 2.9 11.3a1.53 1.53 0 01-.9 1.9l-1.3.4a1.63 1.63 0 01-1.9-.9l-.7-1.8z" fill="#333" opacity=".7"/>' +
+                        '<path d="m5.9 13.6 1.1-.9h7.8l1.2.9" fill="#ce592c"/>' +
+                        '<ellipse cx="10.9" cy="13.1" rx="2.7" ry=".3" fill="#ce592c" opacity=".5"/>' +
+                        '<path d="m20.6 26.1-2.9-11.3a1.71 1.71 0 00-1.6-1.2H5.7a1.69 1.69 0 00-1.5 1.3L1.1 26.2a.61.61 0 00.3.7l1.1.4a.61.61 0 00.7-.3l2.7-6.7.2 16.8h3.6l.6-9.3a.47.47 0 01.44-.5h.06c.4 0 .4.2.5.5l.6 9.3h3.6l.2-16.8 2.5 6.6a.52.52 0 00.66.31l1.2-.4a.57.57 0 00.5-.7Z" fill="#fdbf2d"/>' +
+                        '<path d="m7 13.6 3.9 6.7 3.9-6.7" fill="#cf572e" opacity=".6"/>' +
+                        '<circle cx="10.9" cy="7" r="5.9" fill="#fdbf2d"/>' +
+                        '</svg>';
+
+                    var pegmanIcon = L.divIcon({
+                        className: 'pegman-marker',
+                        html: pegmanSVG,
+                        iconSize: [44, 44],
+                        iconAnchor: [22, 42]
+                    });
+
+                    L.marker([lat, lng], { icon: pegmanIcon, draggable: false }).addTo(map);
+
+                    // زر تبديل الطبقات
+                    var LayerToggle = L.Control.extend({
+                        options: { position: 'topright' },
+                        onAdd: function () {
+                            var container = L.DomUtil.create('div', 'map-toggle-container');
+
+                            var btnMap = L.DomUtil.create('button', 'map-toggle-btn active', container);
+                            btnMap.innerHTML = 'خريطة';
+
+                            var btnSat = L.DomUtil.create('button', 'map-toggle-btn', container);
+                            btnSat.innerHTML = 'قمر صناعي';
+
+                            L.DomEvent.on(btnMap, 'click', function (e) {
+                                L.DomEvent.stopPropagation(e);
+                                if (map.hasLayer(satelliteLayer)) map.removeLayer(satelliteLayer);
+                                if (map.hasLayer(satelliteLabels)) map.removeLayer(satelliteLabels);
+                                baseLayer.addTo(map);
+                                btnMap.classList.add('active');
+                                btnSat.classList.remove('active');
+                            });
+
+                            L.DomEvent.on(btnSat, 'click', function (e) {
+                                L.DomEvent.stopPropagation(e);
+                                if (map.hasLayer(baseLayer)) map.removeLayer(baseLayer);
+                                satelliteLayer.addTo(map);
+                                satelliteLabels.addTo(map);
+                                btnSat.classList.add('active');
+                                btnMap.classList.remove('active');
+                            });
+
+                            return container;
+                        }
+                    });
+                    map.addControl(new LayerToggle());
+
                     setTimeout(function () { map.invalidateSize(); }, 300);
                 });
             </text>
