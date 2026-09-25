@@ -615,9 +615,14 @@ namespace RealEstateWebApp.Controllers
             string uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "image", folder);
             Directory.CreateDirectory(uploadsFolder);
 
-            string uniqueFileName = Guid.NewGuid().ToString() + "_" + file.FileName;
-            string filePath = Path.Combine(uploadsFolder, uniqueFileName);
+            // 1. نأخذ الامتداد بس من اسم الملف اللي رفعه المستخدم (مثلاً .jpg)
+            string extension = Path.GetExtension(file.FileName);
 
+            // 2. نعمل اسم جديد كامل عشوائي، وما نستخدم اسم المستخدم أبداً
+            string uniqueFileName = Guid.NewGuid().ToString() + extension;
+
+            // 3. ندمج المجلد الآمن مع الاسم الجديد
+            string filePath = Path.Combine(uploadsFolder, uniqueFileName);
             using (var fileStream = new FileStream(filePath, FileMode.Create))
             {
                 await file.CopyToAsync(fileStream);
