@@ -18,10 +18,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="~/css/search.css" />
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <style>
-        /* جميع التنسيقات كما هي (تم حذفها للاختصار، ولكن ضعها كاملة من الملف السابق) */
-        /* ... ضع كل التنسيقات هنا ... */
-    </style>
+   
 </head>
 <body>
 
@@ -32,7 +29,7 @@
            <li><a href="/Home/Index?skipRedirect=true"><span class="link_span">الرئيسية</span></a></li>
             <li><a href="/Properties/Create" target="_blank" id="announceLink"><span class="link_span">أعلن عن عقارك</span></a></li>
             <li><a href="/Search/Index"><span class="link_span">ابحث عن عقارك</span></a></li>
-            <li><a href="/Account/Index"><span class="link_span">محفوظاتي</span></a></li>
+            <li><a href="@Url.Action("MyFavorites", "Properties")">محفوظاتي</a></li>
            <li> <a href="/Home/Index?skipRedirect=true#contactSection" id="contactNavLink"> <span class="link_span">تواصل معنا</span>  </a></li>
         </ul>
         <div class="navbar-right">
