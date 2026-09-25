@@ -32,8 +32,13 @@ builder.Services.Configure<KestrelServerOptions>(options =>
 
 // ربط قاعدة البيانات
 builder.Services.AddDbContext<ApplicationDbContext>(o =>
-    o.UseSqlServer(builder.Configuration.GetConnectionString("Try8")));
-
+    o.UseSqlServer(
+        builder.Configuration.GetConnectionString("Try8"),
+        sqlServerOptions => sqlServerOptions.EnableRetryOnFailure(
+            maxRetryCount: 5,
+            maxRetryDelay: TimeSpan.FromSeconds(30),
+            errorNumbersToAdd: null)
+    ));
 // إضافة Identity
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
