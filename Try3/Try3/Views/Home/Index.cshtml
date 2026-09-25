@@ -19,7 +19,6 @@
     <link rel="stylesheet" href="~/css/index.css" />
 
     <style>
-        /* ===== زر استكشف العقارات - بدون حواف مدورة ===== */
         .btn-primary {
             background: linear-gradient(135deg, #d4af37, #b8941f);
             color: #0b1320;
@@ -70,28 +69,29 @@
 </head>
 <body>
 
-    <!-- ===== شريط التنقل ===== -->
     <nav class="navbar">
         <img class="logo" src="~/image/hero.png" alt="SYRELIS Logo" />
         <ul class="nav-links">
             <li><a href="@Url.Action("Create", "Properties")" id="announceLink"><span class="link_span">أعلن عن عقارك</span></a></li>
             <li><a href="@Url.Action("Index", "Search")" id="searchLink"><span class="link_span">ابحث عن عقارك</span></a></li>
-            <li><a href="@Url.Action("Index", "Account")" id="myAccountLink"><span class="link_span">محفوظاتي</span></a></li>
-           <li> <a href="/Home/Index?skipRedirect=true#contactSection" id="contactNavLink"> <span class="link_span">تواصل معنا</span>  </a></li>
+            <li><a href="@Url.Action("MyFavorites", "Properties")" id="myAccountLink"><span class="link_span">محفوظاتي</span></a></li>
+            <li><a href="/Home/Index?skipRedirect=true#contactSection" id="contactNavLink"><span class="link_span">تواصل معنا</span></a></li>
         </ul>
+
         @if (SignInManager.IsSignedIn(User))
         {
-            <button class="login-btn-nav logout-active" onclick="openLogoutModal()">
+            <button class="login-btn-nav" id="openModalBtn">
                 <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
             </button>
         }
         else
         {
-            <button class="login-btn-nav" id="openModalBtn">تسجيل الدخول</button>
+            <button class="login-btn-nav" id="openModalBtn">
+                <i class="fas fa-sign-in-alt"></i> تسجيل الدخول
+            </button>
         }
     </nav>
 
-    <!-- ===== الهيرو ===== -->
     <section class="hero">
         <div class="hero-content">
             <h1>منزل <span>أحلامك</span><br />يبدأ من SYRELIS</h1>
@@ -107,7 +107,6 @@
         </div>
     </section>
 
-    <!-- ===== المدن (من قاعدة البيانات) ===== -->
     <section class="featured">
         <div class="container">
             <h2 class="section-title">
@@ -137,7 +136,6 @@
         </div>
     </section>
 
-    <!-- ===== التواصل ===== -->
     <section class="contact-section" id="contactSection">
         <div class="contact-grid">
             <div class="contact-info">
@@ -160,11 +158,9 @@
                     <span>الأحد – الخميس: 9ص – 8م</span>
                 </div>
             </div>
-           
         </div>
     </section>
 
-    <!-- ===== الفوتر ===== -->
     <footer class="footer">
         <div class="footer-content">
             <div class="footer-logo">SYRELIS</div>
@@ -177,259 +173,7 @@
         </div>
     </footer>
 
-    <!-- ===== مودال تسجيل الدخول ===== -->
-    <div id="authModal" class="modal-overlay">
-        <div class="modal-card">
-            <div class="modal-header">
-                <button class="close-modal" id="closeModalBtn">&times;</button>
-                <div class="logo-icon">
-                    <img class="logo_loin" src="~/image/logo_loin.png" alt="" />
-                </div>
-                <h2 id="modalTitle">SYRELIS</h2>
-                <p id="modalSubtitle">سجل دخولك للوصول إلى حسابك</p>
-            </div>
-            <div class="modal-body">
-                <div id="messageBox" class="message"></div>
-
-                <div id="loginPanel">
-                    <div class="input-group">
-                        <i class="fas fa-envelope"></i>
-                        <input type="email" id="loginEmail" placeholder="البريد الإلكتروني" />
-                    </div>
-                    <div class="input-group">
-                        <i class="fas fa-lock"></i>
-                        <input type="password" id="loginPassword" placeholder="كلمة المرور ( 8 خانات )" />
-                    </div>
-                    <button class="auth-btn" id="doLoginBtn">
-                        <i class="fas fa-sign-in-alt"></i> تسجيل الدخول
-                    </button>
-                    <div class="toggle-auth">
-                        ليس لديك حساب؟ <a id="switchToSignupBtn">إنشاء حساب جديد</a>
-                    </div>
-                </div>
-
-                <div id="signupPanel" style="display: none">
-                    <div class="input-group">
-                        <i class="fas fa-user"></i>
-                        <input type="text" id="signupName" placeholder="الاسم الكامل" />
-                    </div>
-                    <div class="input-group">
-                        <i class="fas fa-phone"></i>
-                        <input type="tel" id="signupPhone" placeholder="رقم الهاتف (09xxxxxxxx)" />
-                    </div>
-                    <div class="input-group">
-                        <i class="fas fa-envelope"></i>
-                        <input type="email" id="signupEmail" placeholder="البريد الإلكتروني" />
-                    </div>
-                    <div class="input-group">
-                        <i class="fas fa-lock"></i>
-                        <input type="password" id="signupPassword" placeholder="كلمة المرور ( 8 خانات )" />
-                    </div>
-                    <div class="input-group">
-                        <i class="fas fa-check-circle"></i>
-                        <input type="password" id="signupConfirm" placeholder="تأكيد كلمة المرور" />
-                    </div>
-                    <button class="auth-btn" id="doSignupBtn">
-                        <i class="fas fa-user-plus"></i> إنشاء حساب
-                    </button>
-                    <div class="toggle-auth">
-                        لديك حساب؟ <a id="switchToLoginBtn">تسجيل الدخول</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- ===== مودال "يجب تسجيل الدخول" ===== -->
-    <div id="loginRequiredModal" class="modal-overlay login-required-modal">
-        <div class="modal-card">
-            <button class="close-modal" id="closeRequiredModalBtn" style="top: 18px; left: 26.7rem; color: #1a2c44">
-                &times;
-            </button>
-            <div class="login-required-icon">
-                <i class="fas fa-lock"></i>
-            </div>
-            <h2 class="login-required-title">يجب تسجيل الدخول أولاً</h2>
-            <p class="login-required-text" id="loginRequiredText">
-                للوصول إلى هذه الصفحة، يجب أن تكون مسجلاً دخولك في حسابك.
-                <br />سجّل دخولك الآن واستمتع بجميع خدماتنا!
-            </p>
-            <div class="login-required-buttons">
-                <button class="btn-cancel" id="cancelRequiredBtn">
-                    <i class="fas fa-times"></i> إلغاء
-                </button>
-                <button class="btn-login-now" id="goToLoginBtn">
-                    <i class="fas fa-sign-in-alt"></i> سجل دخولك الآن
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- ===== مودال تسجيل الخروج ===== -->
-    <div id="logoutModal" class="modal-overlay">
-        <div class="modal-card">
-            <div class="modal-header" style="background: linear-gradient(135deg, #0b1320, #1a2a3e); padding: 27px 0 20px; text-align: center; position: relative;">
-                <button class="close-modal" onclick="closeLogoutModal()" style="position: absolute; top: 18px; left: 25rem; font-size: 31px; cursor: pointer; color: #d7d5aa; background: none; border: none;">
-                    &times;
-                </button>
-                <div class="logout-icon" style="width: 70px; height: 70px; background: linear-gradient(135deg, #1a2c44, #465e7d); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px; border: 2px solid #d4af37;">
-                    <i class="fas fa-sign-out-alt" style="font-size: 2rem; color: #d4af37;"></i>
-                </div>
-                <h2 style="font-family: 'Cinzel', serif; font-size: 1.6rem; color: #d6cb85; margin: 0;">تسجيل الخروج</h2>
-                <p style="color: rgba(255,255,255,0.7); font-size: 0.9rem; margin-top: 5px;">هل أنت متأكد من تسجيل الخروج؟</p>
-            </div>
-            <div class="modal-body" style="padding: 30px 30px 25px;">
-                <p style="color: #6b7280; font-size: 1rem; text-align: center; line-height: 1.7; margin-bottom: 25px;">
-                    سيتم إنهاء جلستك الحالية.<br />يمكنك تسجيل الدخول مرة أخرى في أي وقت.
-                </p>
-                <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
-                    <button onclick="closeLogoutModal()" style="flex: 1; padding: 13px; background: #e8e8ec; border: none; border-radius: 50px; color: #6b7280; font-weight: 700; cursor: pointer; font-family: 'Tajawal', sans-serif; font-size: 0.95rem; transition: 0.3s; min-width: 120px;">
-                        <i class="fas fa-times"></i> إلغاء
-                    </button>
-                    <button onclick="confirmLogout()" style="flex: 1.3; padding: 13px; background: linear-gradient(135deg, #1a2c44, #1a2a3e); border: 1.5px solid #d4af37; border-radius: 50px; color: #d4af37; font-weight: 800; cursor: pointer; font-family: 'Tajawal', sans-serif; font-size: 0.95rem; transition: 0.3s; min-width: 120px;">
-                        <i class="fas fa-sign-out-alt"></i> تأكيد الخروج
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- ===== AntiForgeryToken ===== -->
     @Html.AntiForgeryToken()
-
-    <!-- ===== ربط ملف الجافاسكريبت الخارجي <script src="~/js/index.js"></script> ===== -->
-   
-
-    <script>
-        // ===== مودال تسجيل الخروج =====
-        function openLogoutModal() {
-            document.getElementById('logoutModal').classList.add('active');
-            document.body.style.overflow = 'hidden';
-        }
-
-        function closeLogoutModal() {
-            document.getElementById('logoutModal').classList.remove('active');
-            document.body.style.overflow = '';
-        }
-
-        function confirmLogout() {
-            closeLogoutModal();
-
-            var token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
-
-            fetch('/Account/Logout', {
-                method: 'POST',
-                headers: {
-                    'RequestVerificationToken': token
-                }
-            })
-                .then(function (response) { return response.json(); })
-                .then(function (data) {
-                    if (data.success) {
-                        showToast('✅ تم تسجيل خروجك بنجاح', 'success');
-                        localStorage.removeItem('syrelis_logged_in');
-                        setTimeout(function () { location.reload(); }, 1500);
-                    } else {
-                        showToast('❌ حدث خطأ أثناء تسجيل الخروج', 'error');
-                    }
-                })
-                .catch(function () {
-                    showToast('❌ حدث خطأ أثناء تسجيل الخروج', 'error');
-                });
-        }
-
-        function showToast(message, type) {
-            var old = document.querySelector('.custom-toast');
-            if (old) old.remove();
-
-            var toast = document.createElement('div');
-            toast.className = 'custom-toast ' + type;
-            toast.style.cssText = `
-                        position: fixed;
-                        top: 20px;
-                        left: 50%;
-                        transform: translateX(-50%);
-                        padding: 15px 30px;
-                        border-radius: 12px;
-                        font-weight: 700;
-                        font-size: 1.1rem;
-                        z-index: 99999;
-                        box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-                        font-family: 'Tajawal', sans-serif;
-                        ${type === 'success' ? 'background: #22c55e; color: #fff;' : ''}
-                        ${type === 'error' ? 'background: #dc3545; color: #fff;' : ''}
-                        ${type === 'warning' ? 'background: #f59e0b; color: #fff;' : ''}
-                        direction: rtl;
-                    `;
-            toast.textContent = message;
-            document.body.appendChild(toast);
-
-            setTimeout(function () {
-                toast.style.opacity = '0';
-                setTimeout(function () { toast.remove(); }, 500);
-            }, 3000);
-        }
-
-        // إغلاق المودال عند الضغط على الخلفية
-        document.getElementById('logoutModal').addEventListener('click', function (e) {
-            if (e.target === this) closeLogoutModal();
-        });
-
-        // إغلاق المودال بـ Escape
-        document.addEventListener('keydown', function (e) {
-            if (e.key === 'Escape') {
-                if (document.getElementById('logoutModal').classList.contains('active')) {
-                    closeLogoutModal();
-                }
-            }
-        });
-
-        // ============================================================
-        // ✅ الروابط التي تحتاج تسجيل دخول (يتم منعها للمستخدم غير المسجل)
-        // ============================================================
-
-        // زر "أعلن عن عقارك"
-        document.getElementById('announceLink').addEventListener('click', function (e) {
-        @if (!SignInManager.IsSignedIn(User))
-        {
-            <text>
-                    e.preventDefault();
-                document.getElementById('loginRequiredText').innerHTML = 'لإعلان عقارك، يجب أن تكون مسجلاً دخولك في حسابك.<br>سجّل دخولك الآن وانشر عقارك بكل سهولة!';
-                document.getElementById('loginRequiredModal').classList.add('active');
-            </text>
-        }
-                });
-
-        // زر "حسابي"
-        document.getElementById('myAccountLink').addEventListener('click', function (e) {
-        @if (!SignInManager.IsSignedIn(User))
-        {
-            <text>
-                    e.preventDefault();
-                document.getElementById('loginRequiredText').innerHTML = 'للوصول إلى حسابك، يجب أن تكون مسجلاً دخولك.<br>سجّل دخولك الآن لإدارة عقاراتك وبياناتك!';
-                document.getElementById('loginRequiredModal').classList.add('active');
-            </text>
-        }
-                    // إذا كان المستخدم مسجلاً، الرابط يعمل بشكل طبيعي (يذهب إلى /Account/Index)
-                });
-
-        // ============================================================
-        // ✅ الروابط العامة (تفتح بدون تسجيل دخول)
-        // ============================================================
-
-        // زر "ابحث عن عقارك" - يذهب إلى /Search/Index (يعمل دائماً)
-        // زر "تواصل معنا" - ينزل إلى قسم التواصل (يعمل دائماً)
-        // زر "استكشف العقارات" - يذهب إلى /Properties/All (يعمل دائماً)
-        // زر "العقارات المطلوبة" - يذهب إلى /PropertyRequest/All (يعمل دائماً)
-
-        // ===== زر "سجل دخولك الآن" في مودال "يجب تسجيل الدخول" =====
-        document.getElementById('goToLoginBtn').addEventListener('click', function () {
-            document.getElementById('loginRequiredModal').classList.remove('active');
-            setTimeout(function () {
-                document.getElementById('openModalBtn').click();
-            }, 300);
-        });
-    </script>
 
 </body>
 </html>

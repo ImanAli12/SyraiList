@@ -38,13 +38,16 @@ namespace RealEstateWebApp.Middlewares
 
             memStream.Position = 0;
             var bodyText = await new StreamReader(memStream, Encoding.UTF8).ReadToEndAsync();
-            context.Response.Body = originalBody;
 
             var contentType = context.Response.ContentType ?? "";
+            var hasOwnModal = bodyText.Contains("id=\"authModal\"")
+                           || bodyText.Contains("id='authModal'");
+            var alreadyInjected = bodyText.Contains("syrelisAuthInjected");
 
             if (contentType.Contains("text/html")
                 && bodyText.Contains("</body>")
-                && !bodyText.Contains("syrelisAuthInjected"))
+                && !hasOwnModal
+                && !alreadyInjected)
             {
                 var signInManager = context.RequestServices
                     .GetRequiredService<SignInManager<ApplicationUser>>();
@@ -56,9 +59,10 @@ namespace RealEstateWebApp.Middlewares
                 bodyText = bodyText.Replace("</body>", injection + "\n</body>");
             }
 
+            context.Response.Body = originalBody;
             var bytes = Encoding.UTF8.GetBytes(bodyText);
             context.Response.ContentLength = bytes.Length;
-            await context.Response.Body.WriteAsync(bytes, 0, bytes.Length);
+            await originalBody.WriteAsync(bytes, 0, bytes.Length);
         }
 
         private static bool IsStaticFile(string path)
@@ -76,21 +80,13 @@ namespace RealEstateWebApp.Middlewares
             var sb = new StringBuilder();
 
             sb.Append("<!-- syrelisAuthInjected -->\n");
-
-            // ✅ متغيرات من السيرفر (مصدر الحقيقة)
             sb.Append("<script>window.syrelisIsAuthenticated=");
             sb.Append(authFlag);
             sb.Append(";window.syrelisUserName='");
             sb.Append(safeUser);
             sb.Append("';</script>\n");
-
-            // ✅ CSS
             sb.Append("<link rel='stylesheet' href='/css/syrelis-auth.css' />\n");
-
-            // ✅ HTML (المودالات)
             sb.Append(GetModalHtml());
-
-            // ✅ JS
             sb.Append("<script src='/js/syrelis-auth.js'></script>\n");
 
             return sb.ToString();
@@ -98,7 +94,6 @@ namespace RealEstateWebApp.Middlewares
 
         private static string GetModalHtml()
         {
-            // ⚠️ كل الاقتباسات هنا single quotes فقط — لا تضع " أبدًا
             return @"
 <div id='authModal' role='dialog' aria-hidden='true'>
     <div class='syrelis-modal-card'>
